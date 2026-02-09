@@ -12,8 +12,8 @@ import {
 import Image from "next/image";
 import dime from "@/assets/dime.jpg";
 import anoos from "@/assets/anoos.jpg";
-import sajol from "@/assets/sajol.jpg";
-import palle from "@/assets/palle.jpg";
+import sajol from "@/assets/sajol.jpeg";
+import palle from "@/assets/palle.png";
 
 
 const TEAM_MEMBERS = [
@@ -40,7 +40,7 @@ const TEAM_MEMBERS = [
   },
   {
     id: "4",
-    firstname: "Carlo",
+    firstname: "Carlo Jay",
     lastname: "Anoos",
     role: "QA Specialist",
     avatar: anoos,
