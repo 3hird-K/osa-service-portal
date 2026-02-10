@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image"
-import Logo from "@/assets/image.png"
+import Logo from "@/assets/imagess.png"
 
 const staticData = {
   navMain: [],
@@ -63,9 +63,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <div className="flex w-full justify-center py-4">
                   <Image
                     src={Logo}
-                    alt="BookVault Logo"
-                    width={200}
-                    height={200}
+                    alt="Osa Logo"
+                    width={300}
+                    height={300}
                     className="block object-contain"
                   />
                 </div>

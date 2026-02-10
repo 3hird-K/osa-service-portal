@@ -208,7 +208,6 @@ function CarouselNext({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
-
   return (
     <Button
       data-slot="carousel-next"
