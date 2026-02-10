@@ -10,9 +10,14 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// export const metadata: Metadata = {
+//   title: "Osa Service Portal",
+//   description: "A portal for Osa Service",
+// };
 export const metadata: Metadata = {
-  title: "Osa Service Portal",
-  description: "A portal for Osa Service",
+  title: "OSA Service Portal | USTP CDO",
+  description: "The official Office of Student Affairs (OSA) Service Portal for USTP students. Access student services, tracking, and resources online.",
+  keywords: ["USTP", "OSA", "Service Portal", "Cagayan de Oro", "Student Affairs"],
 };
 
 export default function RootLayout({
