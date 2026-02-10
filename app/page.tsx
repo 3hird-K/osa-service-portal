@@ -6,6 +6,7 @@ import Image from "next/image"
 import Logo from "@/assets/image.png"
 import { Hero } from "@/components/hero"
 import { TeamCarousel } from "@/components/team-carousel"
+import { MobileAppLink } from "@/components/mobile-app-link"
 import { Suspense } from "react" 
 
 export default function Home() {
@@ -40,6 +41,7 @@ export default function Home() {
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
           <Hero />
           <TeamCarousel />
+          <MobileAppLink />
         </div>
 
         {/* Footer */}
