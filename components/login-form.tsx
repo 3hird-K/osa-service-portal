@@ -65,7 +65,7 @@ export function LoginForm({
               src={SideImage}
               alt="Service Portal Background"
               fill
-              className="object-cover"
+              className="object-fit object-center"
               priority
             />
             {/* Overlay using standard utility classes */}

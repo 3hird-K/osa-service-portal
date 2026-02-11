@@ -198,7 +198,7 @@ export function SignUpForm({
               src={RightImage}
               alt="Community Service"
               fill
-              className="object-cover"
+              className="object-fit object-center"
               priority
             />
             {/* THEME-AWARE GRADIENT:
