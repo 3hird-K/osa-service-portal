@@ -11,6 +11,8 @@ import Link from "next/link";
 import { StatusIndicator } from "@/components/status-indicator";
 import { FeatureCard } from "@/components/feature-card";
 
+// Sir Here is the 2 compnent applied the FeatureCard and StatusIndicator, Recommit wrong commit supposed the last commit "c181805 - SHA"
+
 const mobileFeatures = [
   {
     icon: <QrCode className="h-4 w-4 text-primary" />,
