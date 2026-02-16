@@ -1,13 +1,14 @@
-import { EnvVarWarning } from "@/components/env-var-warning"
-import { AuthButton } from "@/components/auth-button"
-import { hasEnvVars } from "@/lib/utils"
-import Link from "next/link"
-import Image from "next/image"
-import Logo from "@/assets/image.png"
-import { Hero } from "@/components/hero"
-import { TeamCarousel } from "@/components/team-carousel"
-import { MobileAppLink } from "@/components/mobile-app-link"
-import { Suspense } from "react" 
+import { EnvVarWarning } from "@/components/env-var-warning";
+import { AuthButton } from "@/components/auth-button";
+import { hasEnvVars } from "@/lib/utils";
+import Link from "next/link";
+import Image from "next/image";
+import Logo from "@/assets/image.png";
+import { Hero } from "@/components/hero";
+import { TeamCarousel } from "@/components/team-carousel";
+import { MobileAppLink } from "@/components/mobile-app-link";
+import { WebAppLink } from "@/components/web-app-link";
+import { Suspense } from "react";
 
 export default function Home() {
   return (
@@ -31,17 +32,22 @@ export default function Home() {
             </div>
 
             {/* 2. Wrap the Auth logic in Suspense */}
-            <Suspense fallback={<div className="h-8 w-20 bg-muted animate-pulse rounded-md" />}>
+            <Suspense
+              fallback={
+                <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
+              }
+            >
               {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
             </Suspense>
           </div>
         </nav>
 
         {/* Page Content */}
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
+        <div className="flex-1 w-full flex flex-col gap-10 sm:gap-20 max-w-5xl p-5">
           <Hero />
           <TeamCarousel />
           <MobileAppLink />
+          <WebAppLink />
         </div>
 
         {/* Footer */}
@@ -60,5 +66,5 @@ export default function Home() {
         </footer>
       </div>
     </main>
-  )
+  );
 }

@@ -16,8 +16,15 @@ const geistSans = Geist({
 // };
 export const metadata: Metadata = {
   title: "OSA Service Portal | USTP CDO",
-  description: "The official Office of Student Affairs (OSA) Service Portal for USTP students. Access student services, tracking, and resources online.",
-  keywords: ["USTP", "OSA", "Service Portal", "Cagayan de Oro", "Student Affairs"],
+  description:
+    "The official Office of Student Affairs (OSA) Service Portal for USTP students. Access student services, tracking, and resources online.",
+  keywords: [
+    "USTP",
+    "OSA",
+    "Service Portal",
+    "Cagayan de Oro",
+    "Student Affairs",
+  ],
 };
 
 export default function RootLayout({
@@ -27,10 +34,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased`}>
+      <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
         <Providers>
           {children}
-          <Toaster position="top-center"/>
+          <Toaster position="top-center" />
         </Providers>
       </body>
     </html>
