@@ -10,6 +10,7 @@ import { MobileAppLink } from "@/components/mobile-app-link";
 import { WebAppLink } from "@/components/web-app-link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
+import { link } from "fs";
 
 export default function Home() {
   return (
@@ -52,6 +53,11 @@ export default function Home() {
           <Button variant="outline" size="lg">
             Neil Dime
           </Button>
+
+          <Button variant="secondary" size="icon">
+            Daniel James 
+          </Button>
+            
 
           <TeamCarousel />
           <MobileAppLink />
