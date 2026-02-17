@@ -54,8 +54,12 @@ export default function Home() {
             Neil Dime
           </Button>
 
-          <Button variant="secondary" size="icon">
+          <Button variant="secondary" size="sm">
             Daniel James 
+          </Button>
+
+          <Button variant="default" size="default">
+            Iezhera Sajol
           </Button>
             
 
