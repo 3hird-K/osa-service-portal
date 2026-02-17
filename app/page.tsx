@@ -9,6 +9,8 @@ import { TeamCarousel } from "@/components/team-carousel";
 import { MobileAppLink } from "@/components/mobile-app-link";
 import { WebAppLink } from "@/components/web-app-link";
 import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { link } from "fs";
 
 export default function Home() {
   return (
@@ -45,6 +47,18 @@ export default function Home() {
         {/* Page Content */}
         <div className="flex-1 w-full flex flex-col gap-10 sm:gap-20 max-w-5xl p-5">
           <Hero />
+
+          {/* Members */}
+          <h1 className="text-center">Members:</h1>
+          <Button variant="outline" size="lg">
+            Neil Dime
+          </Button>
+
+          <Button variant="secondary" size="icon">
+            Daniel James 
+          </Button>
+            
+
           <TeamCarousel />
           <MobileAppLink />
           <WebAppLink />
