@@ -47,22 +47,6 @@ export default function Home() {
         {/* Page Content */}
         <div className="flex-1 w-full flex flex-col gap-10 sm:gap-20 max-w-5xl p-5">
           <Hero />
-
-          {/* Members */}
-          <h1 className="text-center">Members:</h1>
-          <Button variant="outline" size="lg">
-            Neil Dime
-          </Button>
-
-          <Button variant="secondary" size="sm">
-            Daniel James 
-          </Button>
-
-          <Button variant="default" size="default">
-            Iezhera Sajol
-          </Button>
-            
-
           <TeamCarousel />
           <MobileAppLink />
           <WebAppLink />
