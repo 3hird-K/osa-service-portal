@@ -22,9 +22,8 @@ export function NavMain({
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
-        <SidebarMenu>
+        {/* <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
-            {/* Wrap the button in the Dialog logic */}
             <AddBookDialog>
               <SidebarMenuButton
                 tooltip="Quick Create"
@@ -35,7 +34,10 @@ export function NavMain({
               </SidebarMenuButton>
             </AddBookDialog>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> */}
+
+
+        
 
         <SidebarMenu>
           {items.map((item) => (
