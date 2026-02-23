@@ -38,7 +38,7 @@ export default function LibraryPage() {
       {/* --- PAGE TITLE SECTION --- */}
       <div className="space-y-1">
         <div className="flex items-center gap-3">
-          <h1 className="text-4xl font-extrabold tracking-tight">Books</h1>
+          <h1 className="text-4xl font-extrabold tracking-tight">Client Board</h1>
           {isLoading ? (
             <Skeleton className="h-6 w-20 rounded-full" />
           ) : (
@@ -59,7 +59,7 @@ export default function LibraryPage() {
         <div className="relative w-full sm:w-96 group">
           <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" />
           <Input
-            placeholder="Search titles, authors, or genres..."
+            placeholder="Search anything..."
             className="pl-10 pr-10 h-11 bg-muted/40 border-none rounded-xl focus-visible:ring-1 focus-visible:ring-primary/50 transition-all shadow-sm"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -69,17 +69,13 @@ export default function LibraryPage() {
       </div>
 
       {/* --- GRID SECTION (Actual Grid or Skeleton) --- */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-x-6 gap-y-10">
+      {/* <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-x-6 gap-y-10">
         {isLoading ? (
-          // Render 14 skeleton cards to fill the view
           Array.from({ length: 14 }).map((_, i) => (
             <div key={i} className="flex flex-col space-y-3">
-              {/* The "Book Cover" aspect ratio */}
               <Skeleton className="aspect-[3/4] w-full rounded-xl" />
               <div className="space-y-2">
-                {/* Title line */}
                 <Skeleton className="h-4 w-full" />
-                {/* Author line */}
                 <Skeleton className="h-3 w-2/3" />
               </div>
             </div>
@@ -87,10 +83,10 @@ export default function LibraryPage() {
         ) : (
           filteredBooks?.map((book) => <BookCard key={book.id} book={book} />)
         )}
-      </div>
+      </div> */}
 
       {/* --- EMPTY STATE --- */}
-      {!isLoading && filteredBooks?.length === 0 && (
+      {/* {!isLoading && filteredBooks?.length === 0 && (
         <div className="flex flex-col items-center justify-center py-32 text-center space-y-3">
           <div className="p-4 bg-muted rounded-full">
             <IconSearch size={32} className="text-muted-foreground" />
@@ -105,7 +101,7 @@ export default function LibraryPage() {
             Clear Search
           </Button>
         </div>
-      )}
+      )} */}
     </div>
   )
 }
