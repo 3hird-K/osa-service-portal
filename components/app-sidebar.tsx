@@ -7,6 +7,7 @@ import {
   IconSettings2, 
   IconHelpCircle,
   IconDashboard, 
+  IconFileTime
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -35,8 +36,8 @@ const staticData = {
   ],
   documents: [
     { name: "Dashboard", url: "/protected/dashboard", icon: IconDashboard },
-    { name: "Library", url: "/protected", icon: IconBuildingArch },
-    { name: "My Shelf", url: "/protected/shelf", icon: IconBooks },
+    { name: "Time logs", url: "/protected", icon: IconFileTime },
+    // { name: "My Shelf", url: "/protected/shelf", icon: IconBooks },
   ],
 };
 

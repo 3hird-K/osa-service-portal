@@ -26,7 +26,7 @@ export default function LibraryPage() {
             Management Dashboard
           </h2>
           <p className="text-muted-foreground">
-            Manage your library inventory and monitor member activity.
+            Manage your student records and user accounts efficiently from this centralized dashboard.
           </p>
         </div>
       </div>
@@ -36,7 +36,7 @@ export default function LibraryPage() {
           <TabsList className="bg-muted/50 p-1 border">
             <TabsTrigger value="books" className="px-6 gap-2">
               <IconBook size={16} />
-              Books
+              Students
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
                 {books?.length || 0}
               </Badge>
@@ -56,10 +56,10 @@ export default function LibraryPage() {
           <TabsContent value="books" className="m-0 border-none p-0 outline-none">
             <div className="flex flex-col gap-4">
               <div>
-                <h3 className="text-lg font-semibold">Book Inventory</h3>
-                <p className="text-sm text-muted-foreground">Full catalog of available titles.</p>
+                <h3 className="text-lg font-semibold">Student Records</h3>
+                <p className="text-sm text-muted-foreground">Full catalog of available student records.</p>
               </div>
-              {isBooksLoading ? <DataTableSkeleton /> : <DataTable data={books || []} />}
+              {/* {isBooksLoading ? <DataTableSkeleton /> : <DataTable data={books || []} />} */}
             </div>
           </TabsContent>
 
