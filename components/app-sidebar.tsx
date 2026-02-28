@@ -31,8 +31,8 @@ import Logo from "@/assets/imagess.png"
 const staticData = {
   navMain: [],
   navSecondary: [
-    { title: "Settings", url: "/settings", icon: IconSettings2 },
-    { title: "Get Help", url: "/help", icon: IconHelpCircle },
+    { title: "Settings", url: "/protected/settings", icon: IconSettings2 },
+    { title: "Get Help", url: "/protected/get-help", icon: IconHelpCircle },
   ],
   documents: [
     { name: "Dashboard", url: "/protected/dashboard", icon: IconDashboard },
