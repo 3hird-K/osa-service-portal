@@ -2,14 +2,12 @@
 
 import * as React from "react";
 import {
-  IconBooks,
-  IconBuildingArch,
-  IconSettings2,
+  IconLayoutDashboard,
+  IconUsersGroup,
+  IconClock,
+  IconSettings,
   IconHelpCircle,
-  IconDashboard,
-  IconFileTime,
-  IconSearch,
-  IconUsers
+  IconDeviceLaptop
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -35,13 +33,14 @@ import Logo from "@/assets/imagess.png"
 const staticData = {
   navMain: [],
   navSecondary: [
-    { title: "Settings", url: "/protected/settings", icon: IconSettings2 },
+    { title: "Settings", url: "/protected/settings", icon: IconSettings },
     { title: "Get Help", url: "/protected/get-help", icon: IconHelpCircle },
   ],
   documents: [
-    { name: "Dashboard", url: "/protected/dashboard", icon: IconDashboard },
-    { name: "Manage Users", url: "/protected/manage-users", icon: IconUsers },
-    { name: "Time logs", url: "/protected", icon: IconFileTime },
+    { name: "Dashboard", url: "/protected/dashboard", icon: IconLayoutDashboard },
+    { name: "Manage Users", url: "/protected/manage-users", icon: IconUsersGroup },
+    { name: "Manage Devices", url: "/protected/manage-devices", icon: IconDeviceLaptop },
+    { name: "Time logs", url: "/protected", icon: IconClock },
   ],
 };
 
