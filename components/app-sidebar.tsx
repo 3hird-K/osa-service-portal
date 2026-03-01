@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { 
-  IconBooks, 
-  IconBuildingArch, 
-  IconSettings2, 
+import {
+  IconBooks,
+  IconBuildingArch,
+  IconSettings2,
   IconHelpCircle,
-  IconDashboard, 
-  IconFileTime
+  IconDashboard,
+  IconFileTime,
+  IconSearch,
+  IconUsers
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -20,9 +22,11 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarTrigger,
+  SidebarInput,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuButton
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image"
@@ -36,8 +40,8 @@ const staticData = {
   ],
   documents: [
     { name: "Dashboard", url: "/protected/dashboard", icon: IconDashboard },
+    { name: "Manage Users", url: "/protected/manage-users", icon: IconUsers },
     { name: "Time logs", url: "/protected", icon: IconFileTime },
-    // { name: "My Shelf", url: "/protected/shelf", icon: IconBooks },
   ],
 };
 
@@ -46,45 +50,42 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const filteredDocuments = React.useMemo(() => {
     if (!profile) return staticData.documents;
-
     if (profile.account_type === "User") {
       return staticData.documents.filter((doc) => doc.name !== "Dashboard");
     }
-
     return staticData.documents;
   }, [profile]);
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5 h-auto">
-              <a href="/">
-                <div className="flex w-full justify-center py-4">
-                  <Image
-                    src={Logo}
-                    alt="Osa Logo"
-                    width={300}
-                    height={300}
-                    className="block object-contain"
-                  />
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader className="space-y-4 pt-6 pb-2">
+        <div className="flex items-center gap-3 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <a href="/" className="flex items-center gap-3 w-full overflow-hidden group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center">
+            <div className="flex bg-[#1c1d22] p-1.5 rounded-lg border border-white/5 shadow-sm justify-center items-center shrink-0">
+              <Image
+                src={Logo}
+                alt="Osa Logo"
+                width={20}
+                height={20}
+                className="block object-contain"
+              />
+            </div>
+            <span className="font-semibold text-sm truncate group-data-[collapsible=icon]:hidden">
+              Osa Service Portal
+            </span>
+          </a>
+        </div>
       </SidebarHeader>
 
       <SidebarContent>
         <NavMain items={staticData.navMain} />
-        
+
         {/* Pass the FILTERED items here instead of staticData.documents */}
         {isLoading ? (
-           <div className="px-4 space-y-2 mt-4">
-             <Skeleton className="h-8 w-full" />
-             <Skeleton className="h-8 w-full" />
-           </div>
+          <div className="px-4 space-y-2 mt-4">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+          </div>
         ) : (
           <NavDocuments items={filteredDocuments} />
         )}
@@ -98,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <Skeleton className="h-12 w-full rounded-lg" />
           </div>
         ) : (
-          <NavUser 
+          <NavUser
             user={{
               id: profile?.id ?? "",
               firstName: profile?.firstname || "User",
@@ -106,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               email: profile?.email || "",
               avatar: profile?.avatar_url || "",
               account_type: profile?.account_type || "User",
-            }} 
+            }}
           />
         )}
       </SidebarFooter>

@@ -1,6 +1,8 @@
 "use client";
 
 import { IconCirclePlusFilled, type Icon } from "@tabler/icons-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -19,6 +21,7 @@ export function NavMain({
     icon?: Icon;
   }[];
 }) {
+  const pathname = usePathname()
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
@@ -37,14 +40,16 @@ export function NavMain({
         </SidebarMenu> */}
 
 
-        
+
 
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton tooltip={item.title}>
-                {item.icon && <item.icon />}
-                <span>{item.title}</span>
+              <SidebarMenuButton asChild isActive={pathname === item.url || (item.url !== "/" && item.url !== "/protected" && pathname.startsWith(item.url + "/"))}>
+                <Link href={item.url}>
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

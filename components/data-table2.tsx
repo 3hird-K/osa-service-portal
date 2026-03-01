@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { format } from "date-fns" 
+import { format } from "date-fns"
 import {
   closestCenter,
   DndContext,
@@ -31,10 +31,11 @@ import {
   IconLayoutColumns,
   IconLoader2,
   IconSearch,
-  IconUser, 
-  IconCalendar, 
+  IconUser,
+  IconCalendar,
   IconShieldCheck,
-  IconMail
+  IconMail,
+  IconAdjustmentsHorizontal
 } from "@tabler/icons-react"
 import {
   flexRender,
@@ -163,7 +164,7 @@ function DraggableRow({ row }: { row: Row<DataRow> }) {
 
 export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
   const [data, setData] = React.useState<DataRow[]>(() => Array.isArray(initialData) ? initialData : [])
-  
+
   React.useEffect(() => {
     if (Array.isArray(initialData)) setData(initialData)
   }, [initialData])
@@ -181,7 +182,7 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
   const [isViewOpen, setIsViewOpen] = React.useState(false)
   const [isEditOpen, setIsEditOpen] = React.useState(false)
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false)
-  
+
   // Account Type Dropdown State
   const [accountType, setAccountType] = React.useState<string>("")
 
@@ -246,12 +247,18 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
     },
     {
       accessorKey: "account_type",
-      header: "Account Type",
-      cell: ({ row }) => (
-        <Badge variant={row.original.account_type === "Admin" ? "default" : "secondary"}>
-          {row.original.account_type}
-        </Badge>
-      ),
+      header: "Role",
+      cell: ({ row }) => {
+        const type = row.original.account_type;
+        const colorClass = type === "Admin" || type === "Staff" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-muted border-border text-muted-foreground";
+        const Icon = type === "Admin" ? IconShieldCheck : IconUser;
+        return (
+          <Badge variant="outline" className={`gap-1 px-2 py-0.5 rounded-md font-normal ${colorClass}`}>
+            <Icon className="h-3 w-3" />
+            {type}
+          </Badge>
+        );
+      },
     },
     {
       accessorKey: "updated_at",
@@ -279,8 +286,8 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
               Edit Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              className="text-destructive" 
+            <DropdownMenuItem
+              className="text-destructive"
               onClick={() => { setSelectedRow(row.original); setIsDeleteAlertOpen(true); }}
             >
               Delete User
@@ -323,20 +330,33 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
   }
 
   return (
-    <div className="w-full space-y-4 py-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between py-4 px-6 gap-4">
-        <div className="relative w-full sm:w-80">
-          <IconSearch className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search members..."
-            value={globalFilter ?? ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="pl-9"
-          />
+    <div className="w-full space-y-4">
+      <div className="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="bg-card border-border h-10 px-4 text-sm font-normal justify-between w-[200px]">
+            All Users <IconChevronDown className="h-4 w-4 opacity-50 ml-2" />
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative w-full sm:w-64">
+            <IconSearch className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users..."
+              value={globalFilter ?? ""}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="pr-9 bg-card border-border h-10 rounded-md"
+            />
+          </div>
+          <Button variant="outline" className="bg-card border-border h-10 px-4 gap-2 text-sm font-normal">
+            <IconAdjustmentsHorizontal className="h-4 w-4" />
+            Customize
+            <IconChevronDown className="h-4 w-4 opacity-50 ml-1" />
+          </Button>
         </div>
       </div>
 
-      <div className="rounded-md border mx-6">
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
         <DndContext
           collisionDetection={closestCenter}
           modifiers={[restrictToVerticalAxis]}
@@ -344,11 +364,11 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
           sensors={sensors}
         >
           <Table>
-            <TableHeader className="bg-muted/50">
+            <TableHeader className="bg-transparent hover:bg-transparent border-b border-border">
               {table.getHeaderGroups().map(hg => (
-                <TableRow key={hg.id}>
+                <TableRow key={hg.id} className="border-none hover:bg-transparent">
                   {hg.headers.map(header => (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className="text-xs font-semibold text-muted-foreground h-12">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                     </TableHead>
                   ))}
@@ -363,9 +383,12 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
                   ))}
                 </SortableContext>
               ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                    No members found.
+                <TableRow className="border-b-[#2c2d3c]">
+                  <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <IconSearch className="h-8 w-8 opacity-20" />
+                      <p>No members found</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -374,18 +397,88 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
         </DndContext>
       </div>
 
+      <div className="flex items-center justify-between py-4 text-sm text-muted-foreground">
+        <div>
+          {Object.keys(rowSelection).length} of {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+        <div className="flex items-center space-x-6 lg:space-x-8">
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-medium">Rows per page</p>
+            <Select
+              value={`${table.getState().pagination.pageSize}`}
+              onValueChange={(value) => {
+                table.setPageSize(Number(value))
+              }}
+            >
+              <SelectTrigger className="h-8 w-[70px] bg-card border-border">
+                <SelectValue placeholder={table.getState().pagination.pageSize} />
+              </SelectTrigger>
+              <SelectContent side="top">
+                {[10, 20, 30, 40, 50].map((pageSize) => (
+                  <SelectItem key={pageSize} value={`${pageSize}`}>
+                    {pageSize}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to first page</span>
+              <IconChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0 bg-card border-border"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <IconChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="h-8 w-8 p-0 bg-card border-border"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to next page</span>
+              <IconChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to last page</span>
+              <IconChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* VIEW MODAL */}
       <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden">
           <div className="bg-muted/50 p-8 flex flex-col items-center gap-4">
-             <Avatar className="h-20 w-20 border-2 border-background">
-                <AvatarImage src={selectedRow?.avatar_url ?? ""} />
-                <AvatarFallback>{selectedRow?.firstname?.[0]}</AvatarFallback>
-             </Avatar>
-             <div className="text-center">
-                <h3 className="text-xl font-bold">{selectedRow?.firstname} {selectedRow?.lastname}</h3>
-                <Badge variant="outline">{selectedRow?.account_type}</Badge>
-             </div>
+            <Avatar className="h-20 w-20 border-2 border-background">
+              <AvatarImage src={selectedRow?.avatar_url ?? ""} />
+              <AvatarFallback>{selectedRow?.firstname?.[0]}</AvatarFallback>
+            </Avatar>
+            <div className="text-center">
+              <h3 className="text-xl font-bold">{selectedRow?.firstname} {selectedRow?.lastname}</h3>
+              <Badge variant="outline">{selectedRow?.account_type}</Badge>
+            </div>
           </div>
           <div className="p-6 space-y-4 text-sm">
             <div className="flex justify-between border-b pb-2">

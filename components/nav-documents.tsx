@@ -1,6 +1,8 @@
 "use client"
 
 import { type Icon } from "@tabler/icons-react"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -18,17 +20,18 @@ export function NavDocuments({
     icon: Icon
   }[]
 }) {
+  const pathname = usePathname()
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Personal Files</SidebarGroupLabel>
+    <SidebarGroup>
+      <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">Personal Files</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
+            <SidebarMenuButton asChild isActive={pathname === item.url || (item.url !== "/" && item.url !== "/protected" && pathname.startsWith(item.url + "/"))}>
+              <Link href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}
