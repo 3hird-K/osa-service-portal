@@ -332,11 +332,11 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
   return (
     <div className="w-full space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           <Button variant="outline" className="bg-card border-border h-10 px-4 text-sm font-normal justify-between w-[200px]">
             All Users <IconChevronDown className="h-4 w-4 opacity-50 ml-2" />
           </Button>
-        </div>
+        </div> */}
 
         <div className="flex items-center gap-3">
           <div className="relative w-full sm:w-64">
@@ -348,11 +348,11 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
               className="pr-9 bg-card border-border h-10 rounded-md"
             />
           </div>
-          <Button variant="outline" className="bg-card border-border h-10 px-4 gap-2 text-sm font-normal">
+          {/* <Button variant="outline" className="bg-card border-border h-10 px-4 gap-2 text-sm font-normal">
             <IconAdjustmentsHorizontal className="h-4 w-4" />
             Customize
             <IconChevronDown className="h-4 w-4 opacity-50 ml-1" />
-          </Button>
+          </Button> */}
         </div>
       </div>
 
