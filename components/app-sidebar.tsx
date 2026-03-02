@@ -37,10 +37,10 @@ const staticData = {
     { title: "Get Help", url: "/protected/get-help", icon: IconHelpCircle },
   ],
   documents: [
-    { name: "Dashboard", url: "/protected/dashboard", icon: IconLayoutDashboard },
+    { name: "Dashboard", url: "/protected", icon: IconLayoutDashboard },
     { name: "Manage Users", url: "/protected/manage-users", icon: IconUsersGroup },
     { name: "Manage Devices", url: "/protected/manage-devices", icon: IconDeviceLaptop },
-    { name: "Time logs", url: "/protected", icon: IconClock },
+    { name: "Time logs", url: "/protected/manage-logs", icon: IconClock },
   ],
 };
 
