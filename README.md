@@ -1,1 +1,1 @@
-Nextjs + Supabase + Shadcn/Tweakcn UI + Tailwindcss
+Nextjs + Supabase + Shadcn/Tweakcn UI + Tailwindcss 
