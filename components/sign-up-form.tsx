@@ -193,26 +193,16 @@ export function SignUpForm({
           </div>
 
           {/* --- Right Side (Image) --- */}
-          <div className="bg-muted relative hidden md:block h-full min-h-[600px]">
+          <div className="relative hidden md:flex items-center justify-center h-full min-h-[600px] overflow-hidden bg-[#1a0e05]">
             <Image
               src={RightImage}
               alt="Community Service"
               fill
-              className="object-fit object-center"
+              className="object-fit"
+              sizes="(max-width: 768px) 0vw, 50vw"
+              quality={95}
               priority
             />
-            {/* THEME-AWARE GRADIENT:
-                Uses `from-primary/90` to create a strong brand-colored overlay at the bottom.
-                Uses `text-primary-foreground` (usually white) for text contrast.
-            */}
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-primary/20 to-transparent flex items-end p-8">
-              <div className="text-primary-foreground">
-                <p className="text-lg font-bold mb-2">Service. Integrity. Innovation.</p>
-                <p className="text-sm italic font-light opacity-90">
-                  "Streamlining community outreach through technology, ensuring every hour counts towards a better tomorrow."
-                </p>
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>

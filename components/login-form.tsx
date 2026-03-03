@@ -60,23 +60,17 @@ export function LoginForm({
         <CardContent className="grid p-0 md:grid-cols-2">
           
           {/* --- Left Side (Image) --- */}
-          <div className="bg-muted relative hidden md:block h-full min-h-[500px]">
+          <div className="relative hidden md:flex items-center justify-center h-full min-h-[500px] overflow-hidden bg-[#1a0e05]">
             <Image
               src={SideImage}
               alt="Service Portal Background"
               fill
-              className="object-fit object-center"
+              // className="object-contain"
+              className="object-fit"
+              sizes="(max-width: 768px) 0vw, 50vw"
+              quality={95}
               priority
             />
-            {/* Overlay using standard utility classes */}
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/60 via-primary/20 to-transparent flex items-end p-8">
-                <div className="text-white">
-                    <p className="text-lg font-bold mb-1">Empowering the Community</p>
-                    <p className="text-sm italic font-light opacity-90">
-                        "Real-time tracking for real-world impact."
-                    </p>
-                </div>
-            </div>
           </div>
 
           {/* --- Right Side (Form) --- */}
