@@ -128,32 +128,67 @@ export function DevicesTable() {
                             </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handleAddSubmit} className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="name" className="text-right">Name</Label>
-                                <Input id="name" placeholder="e.g. MacBook Pro M3" className="col-span-3 bg-background border-border" required />
-                            </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="type" className="text-right">Type</Label>
-                                <Select required>
-                                    <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
-                                        <SelectValue placeholder="Select type" />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-card border-border text-foreground">
-                                        <SelectItem value="laptop">Laptop</SelectItem>
-                                        <SelectItem value="tablet">Tablet</SelectItem>
-                                        <SelectItem value="projector">Projector</SelectItem>
-                                        <SelectItem value="peripheral">Peripheral</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit">Save Device</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
-            </div>
+    <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="firstName" className="text-right">
+            First Name
+        </Label>
+        <Input
+            id="firstName"
+            name="firstName"
+            placeholder="Enter first name"
+            className="col-span-3 bg-background border-border"
+            required
+        />
+    </div>
+    <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="lastName" className="text-right">
+            Last Name
+        </Label>
+        <Input
+            id="lastName"
+            name="lastName"
+            placeholder="Enter last name"
+            className="col-span-3 bg-background border-border"
+            required
+        />
+    </div>
+    <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="deviceName" className="text-right">
+            Device Name
+        </Label>
+        <Input
+            id="deviceName"
+            name="deviceName"
+            placeholder="e.g. MacBook Pro M3"
+            className="col-span-3 bg-background border-border"
+            required
+        />
+    </div>
+
+    {/* Device Type */}
+    <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="type" className="text-right">
+            Device Type
+        </Label>
+        <Select name="type" required>
+            <SelectTrigger className="col-span-3 bg-background border-border text-foreground">
+                <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="laptop">Laptop</SelectItem>
+                <SelectItem value="tablet">Tablet</SelectItem>
+                <SelectItem value="projector">Projector</SelectItem>
+                <SelectItem value="peripheral">Peripheral</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+        </Select>
+    </div>
+
+    <DialogFooter>
+        <Button type="submit">Save Device</Button>
+    </DialogFooter>
+
+</form>
 
             <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
                 <Table>
