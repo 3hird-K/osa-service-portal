@@ -6,12 +6,13 @@ import {
   Clock,
   Shield,
   Wifi,
+  Download,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { StatusIndicator } from "@/components/status-indicator";
 import { FeatureCard } from "@/components/feature-card";
-
-// Sir Here is the 2 compnent applied the FeatureCard and StatusIndicator, Recommit wrong commit supposed the last commit "c181805 - SHA"
+import MobileAppQR from "@/assets/mobile-app.jpeg";
 
 const mobileFeatures = [
   {
@@ -68,16 +69,46 @@ export function MobileAppLink() {
             </p>
           </div>
 
-          {/* Feature Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {mobileFeatures.map((feature) => (
-              <FeatureCard
-                key={feature.title}
-                icon={feature.icon}
-                title={feature.title}
-                description={feature.description}
-              />
-            ))}
+          {/* Main content: Features + QR Code side by side */}
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
+            {/* Feature Cards Grid */}
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {mobileFeatures.map((feature) => (
+                <FeatureCard
+                  key={feature.title}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                />
+              ))}
+            </div>
+
+            {/* QR Code Download Card */}
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+              <div className="relative group flex flex-col items-center gap-4 rounded-2xl border border-primary/10 bg-background/60 backdrop-blur-xl p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:scale-[1.02]">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="relative">
+                  <div className="rounded-xl overflow-hidden bg-white p-2 shadow-sm ring-1 ring-black/5">
+                    <Image
+                      src={MobileAppQR}
+                      alt="Download OSA Service Mobile App"
+                      width={160}
+                      height={160}
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
+                <div className="relative flex flex-col items-center gap-1.5 text-center">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold tracking-tight">
+                    <Download className="h-3.5 w-3.5 text-primary" />
+                    <span>Download App</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-tight max-w-[160px]">
+                    Scan with your camera to install on your device
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Status row */}
