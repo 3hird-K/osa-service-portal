@@ -80,15 +80,7 @@ export function LoginForm({
       <Card className="overflow-hidden p-0 border-none shadow-xl">
         <CardContent className="grid p-0 md:grid-cols-2">
 
-          {/* LEFT IMAGE */}
-          <div className="relative hidden md:flex items-center justify-center h-full min-h-[500px] overflow-hidden bg-[#1a0e05]">
-            <Image
-              src={SideImage}
-              alt="Service Portal Background"
-              fill
-              className="object-cover"
-            />
-          </div>
+          
 
           {/* RIGHT FORM */}
           <div className="p-6 md:p-8 flex flex-col justify-center bg-background">
@@ -158,6 +150,20 @@ export function LoginForm({
                 Register
               </Link>
             </p>
+          </div>
+
+
+          {/* LEFT IMAGE */}
+          <div className="relative hidden md:flex items-center justify-center h-full min-h-[500px] overflow-hidden bg-[#1a0e05]">
+            <Image
+              src={SideImage}
+              alt="Service Portal Background"
+              fill
+              className="object-fill"
+              sizes="(max-width: 768px) 0vw, 50vw"
+              quality={95}
+              priority
+            />
           </div>
 
         </CardContent>

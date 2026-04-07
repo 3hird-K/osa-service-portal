@@ -12,35 +12,77 @@ export function useSyncUser() {
   const { user, isLoaded } = useUser();
   const queryClient = useQueryClient();
 
+  // useEffect(() => {
+  //   const syncUserToDatabase = async () => {
+  //     if (!user?.id || !isLoaded) return;
+
+  //     try {
+  //       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  //       const response = await fetch(`${apiUrl}/sync-user/${user.id}`, {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
+
+  //       if (!response.ok) {
+  //         console.warn(`Failed to sync user ${user.id}:`, response.statusText);
+  //         return;
+  //       }
+
+  //       const data = await response.json();
+  //       console.log(`✅ User synced to Neon DB:`, data);
+
+  //       // Invalidate profile queries to refetch fresh data
+  //       queryClient.invalidateQueries({ queryKey: ["profile"] });
+  //       queryClient.invalidateQueries({ queryKey: ["profiles-here"] });
+  //     } catch (error) {
+  //       console.error("Error syncing user to Neon DB:", error);
+  //     }
+  //   };
+
+  //   syncUserToDatabase();
+  // }, [user?.id, isLoaded, queryClient]);
+
   useEffect(() => {
-    const syncUserToDatabase = async () => {
-      if (!user?.id || !isLoaded) return;
+  const syncUserToDatabase = async () => {
+    console.log("🔥 SYNC START");
 
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-        const response = await fetch(`${apiUrl}/sync-user/${user.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+    if (!user?.id || !isLoaded) {
+      console.log("⛔ Not ready:", { user, isLoaded });
+      return;
+    }
 
-        if (!response.ok) {
-          console.warn(`Failed to sync user ${user.id}:`, response.statusText);
-          return;
-        }
+    const apiUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      "https://server-osa-service.onrender.com";
 
-        const data = await response.json();
-        console.log(`✅ User synced to Neon DB:`, data);
+    console.log("🌐 API URL:", apiUrl);
+    console.log("👤 User ID:", user.id);
 
-        // Invalidate profile queries to refetch fresh data
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
-        queryClient.invalidateQueries({ queryKey: ["profiles-here"] });
-      } catch (error) {
-        console.error("Error syncing user to Neon DB:", error);
+    try {
+      const response = await fetch(`${apiUrl}/sync-user/${user.id}`, {
+        method: "POST",
+      });
+
+      console.log("📡 Status:", response.status);
+
+      if (!response.ok) {
+        console.warn("❌ Sync failed:", response.statusText);
+        return;
       }
-    };
 
-    syncUserToDatabase();
-  }, [user?.id, isLoaded, queryClient]);
+      const data = await response.json();
+      console.log("✅ User synced:", data);
+
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles-here"] });
+    } catch (error) {
+      console.error("💥 Sync error:", error);
+    }
+  };
+
+  syncUserToDatabase();
+}, [user?.id, isLoaded, queryClient]);
+  
 }

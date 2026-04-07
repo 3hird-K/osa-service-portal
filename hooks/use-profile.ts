@@ -8,6 +8,8 @@ export interface ProfileWithEmail {
   account_type: string | null;
   avatar_url: string | null;
   email: string | undefined;
+  created_at?: Date | string;
+  updated_at?: Date | string;
 }
 
 export function useProfile() {
@@ -19,7 +21,7 @@ export function useProfile() {
       if (!user) throw new Error("Not authenticated");
       
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/profiles/${user.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/users/${user.id}`);
         if (!res.ok) {
           if (res.status === 404) {
             // If FastAPI hasn't synced from webhook yet, gracefully return a default mapping
@@ -29,7 +31,9 @@ export function useProfile() {
               lastname: user.lastName,
               account_type: "student",
               avatar_url: user.imageUrl,
-              email: user.primaryEmailAddress?.emailAddress
+              email: user.primaryEmailAddress?.emailAddress,
+              created_at: new Date(),
+              updated_at: new Date(),
             };
           }
           throw new Error("Failed to fetch profile");
@@ -45,7 +49,9 @@ export function useProfile() {
           lastname: user.lastName,
           account_type: "student",
           avatar_url: user.imageUrl,
-          email: user.primaryEmailAddress?.emailAddress
+          email: user.primaryEmailAddress?.emailAddress,
+          created_at: new Date(),
+          updated_at: new Date(),
         };
       }
     },

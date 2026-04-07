@@ -1,6 +1,5 @@
-import { SignInButton, UserButton } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/assets/image.png";
@@ -42,11 +41,11 @@ export default async function Home() {
             >
               {!userId ? (
                   <div className="flex gap-2">
-                    <Link href="/auth/sign-up">
-                      <Button variant={"outline"} className="w-full">Sign Up</Button>
-                    </Link>
                     <Link href="/auth/login">
-                      <Button className="w-full">Sign In</Button>
+                      <Button variant={"outline"} className="w-full">Sign In</Button>
+                    </Link>
+                    <Link href="/auth/sign-up">
+                      <Button className="w-full">Sign Up</Button>
                     </Link>
                   </div>
               ) : (
