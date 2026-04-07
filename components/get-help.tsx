@@ -39,23 +39,6 @@ const faqItems = [
     ],
   },
   {
-    category: "Books & Shelf",
-    questions: [
-      {
-        q: "How do I add a book to my shelf?",
-        a: 'Navigate to the Shelf page and click "Add Book." Fill in the title, author, genre, and optionally upload a cover image. Click "Save" to add it.',
-      },
-      {
-        q: "How do I mark a book as a favorite?",
-        a: "Click the heart icon on any book card to add it to your favorites. You can view all your favorites from the Shelf page by filtering by favorites.",
-      },
-      {
-        q: "Can I edit or delete a book after adding it?",
-        a: 'Yes. Click on a book card to open its details, then use the "Edit" or "Delete" options. Note: only the book\'s owner or an Admin/Staff user can modify or remove a book.',
-      },
-    ],
-  },
-  {
     category: "Devices & Logs",
     questions: [
       {
@@ -95,7 +78,7 @@ const userGuides = [
     steps: [
       "Log in with your credentials at the login page.",
       "You will be redirected to the Dashboard, which shows an overview of your activity.",
-      "Use the sidebar to navigate between sections: Dashboard, Manage Users, Manage Devices, Time Logs, Shelf, Settings, and Get Help.",
+      "Use the sidebar to navigate between sections: Dashboard, Manage Users, Manage Devices, Time Logs, Settings, and Get Help.",
       "Customize your profile in Settings > Profile.",
     ],
   },

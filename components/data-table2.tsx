@@ -53,10 +53,6 @@ import {
 import { toast } from "sonner"
 import { z } from "zod"
 
-// --- Supabase Hooks (Ensure these are updated to handle Profiles, not Books) ---
-import { useDeleteBook } from "@/hooks/use-delete-book"
-import { useUpdateBook } from "@/hooks/use-update-book"
-
 // --- UI Components ---
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -169,7 +165,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
     if (Array.isArray(initialData)) setData(initialData)
   }, [initialData])
 
-  const { mutate: deleteProfile, isPending: isDeleting } = useDeleteBook() // Update to Profile Hook
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser() // Update to Profile Hook
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -193,17 +188,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
     }
   }, [selectedRow])
 
-  const confirmDelete = () => {
-    if (selectedRow) {
-      deleteProfile(selectedRow.id.toString(), {
-        onSuccess: () => {
-          setIsDeleteAlertOpen(false)
-          setSelectedRow(null)
-          toast.success("Member removed successfully")
-        },
-      })
-    }
-  }
 
   const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -542,23 +526,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* DELETE MODAL */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{selectedRow?.firstname} {selectedRow?.lastname}</strong>. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

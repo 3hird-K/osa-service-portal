@@ -52,9 +52,6 @@ import {
 import { toast } from "sonner"
 import { z } from "zod"
 
-// --- Supabase Hooks ---
-import { useDeleteBook } from "@/hooks/use-delete-book"
-import { useUpdateBook } from "@/hooks/use-update-book"
 
 // --- UI Components ---
 import { Badge } from "@/components/ui/badge"
@@ -167,9 +164,6 @@ export function DataTable({ data: initialData }: { data: DataRow[] }) {
     setData(initialData)
   }, [initialData])
 
-  const { mutate: deleteBook, isPending: isDeleting } = useDeleteBook()
-  const { mutate: updateBook, isPending: isUpdating } = useUpdateBook()
-
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -181,36 +175,9 @@ export function DataTable({ data: initialData }: { data: DataRow[] }) {
   const [isEditOpen, setIsEditOpen] = React.useState(false)
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false)
 
-  const confirmDelete = () => {
-    if (selectedRow) {
-      deleteBook(selectedRow.id.toString(), {
-        onSuccess: () => {
-          setIsDeleteAlertOpen(false)
-          setSelectedRow(null)
-        },
-      })
-    }
-  }
+ 
 
-  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    if (selectedRow) {
-      updateBook({
-        bookId: selectedRow.id,
-        updates: {
-          title: formData.get("title") as string,
-          author: formData.get("author") as string,
-          genre: formData.get("genre") as string,
-        }
-      }, {
-        onSuccess: () => {
-          setIsEditOpen(false)
-          setSelectedRow(null)
-        }
-      })
-    }
-  }
+  
 
   const columns = React.useMemo<ColumnDef<DataRow>[]>(() => [
     {
@@ -508,59 +475,7 @@ export function DataTable({ data: initialData }: { data: DataRow[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* EDIT MODAL */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
-          <form onSubmit={handleEditSubmit}>
-            <DialogHeader>
-              <DialogTitle>Edit Record</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" name="title" defaultValue={selectedRow?.title} required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="author">Author</Label>
-                <Input id="author" name="author" defaultValue={selectedRow?.author} required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="genre">Genre</Label>
-                <Input id="genre" name="genre" defaultValue={selectedRow?.genre} />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating && <IconLoader2 className="animate-spin mr-2 h-4 w-4" />}
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
-      {/* DELETE MODAL */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{selectedRow?.title}</strong> from Supabase.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete} 
-              disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }
