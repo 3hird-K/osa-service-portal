@@ -1,16 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { IconBrandApple, IconUser, IconCamera } from "@tabler/icons-react";
+import { IconBrandApple, IconUser } from "@tabler/icons-react";
 import { useProfile } from "@/hooks/use-profile";
-import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
   const [is2FAEnabled, setIs2FAEnabled] = useState(true);
-
+  
   // Notification preferences state
   const [emailNotifs, setEmailNotifs] = useState(true);
   const [pushNotifs, setPushNotifs] = useState(false);
@@ -21,11 +20,21 @@ export default function Settings() {
 
   // Profile state
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const queryClient = useQueryClient();
+  const { user } = useUser();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Password reset state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -35,44 +44,68 @@ export default function Settings() {
     }
   }, [profile]);
 
-  const handleSaveProfile = async () => {
-    if (!profile) return;
-    setIsSaving(true);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ firstname: firstName, lastname: lastName, avatar_url: avatarUrl })
-        .eq("id", profile.id);
-      if (error) throw error;
-      toast.success("Profile updated successfully");
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update profile");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!profile?.email) return;
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
-      });
-      if (error) throw error;
-      toast.success("Password reset email sent. Check your inbox.");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send password reset email");
-    }
-  };
-
   const maskEmail = (email: string | undefined) => {
     if (!email) return "***";
     const [local, domain] = email.split("@");
     if (local.length <= 2) return `${local[0]}***@${domain}`;
     return `${local[0]}***${local[local.length - 1]}@${domain}`;
+  };
+
+  const handleChangePassword = async () => {
+    if (!user) return;
+    
+    // Validation
+    if (!currentPassword.trim()) {
+      setResetMessage("Please enter your current password");
+      return;
+    }
+    if (!newPassword.trim()) {
+      setResetMessage("Please enter a new password");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setResetMessage("Password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setResetMessage("New passwords do not match");
+      return;
+    }
+    
+    setIsResettingPassword(true);
+    setResetMessage("");
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/users/${user.id}/change-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setResetMessage(data.detail || "Failed to change password");
+        return;
+      }
+      
+      setResetMessage("Password changed successfully!");
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+      }, 2000);
+    } catch (error) {
+      setResetMessage("Error: " + (error instanceof Error ? error.message : "Unknown error"));
+    } finally {
+      setIsResettingPassword(false);
+    }
   };
 
   const CustomSwitch = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
@@ -126,7 +159,7 @@ export default function Settings() {
                 <section>
                   <h3 className="text-sm font-semibold mb-4 text-foreground">Profile Picture</h3>
                   <div className="flex items-center gap-6">
-                    <div className="relative group">
+                    <div>
                       <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-sidebar-accent border border-border overflow-hidden">
                         {avatarUrl ? (
                           <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
@@ -134,19 +167,12 @@ export default function Settings() {
                           <IconUser className="h-8 w-8 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                        <IconCamera className="h-5 w-5 text-white" />
-                      </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <input
-                        type="text"
-                        placeholder="Paste avatar URL..."
-                        value={avatarUrl}
-                        onChange={(e) => setAvatarUrl(e.target.value)}
-                        className="rounded-lg bg-background/50 border border-border px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                      <span className="text-xs text-muted-foreground">Enter a URL for your profile picture</span>
+                      <div className="rounded-lg bg-background/50 border border-border px-3 py-2 text-sm w-72 text-foreground font-mono">
+                        {user?.id ?? "—"}
+                      </div>
+                      <span className="text-xs text-muted-foreground">This is your unique identifier</span>
                     </div>
                   </div>
                 </section>
@@ -158,23 +184,15 @@ export default function Settings() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-medium text-muted-foreground">First Name</label>
-                        <input
-                          type="text"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="Enter first name"
-                          className="rounded-xl bg-background/50 border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+                        <div className="rounded-xl bg-background/50 border border-border px-4 py-3 text-sm text-foreground">
+                          {profileLoading ? "Loading..." : firstName || "—"}
+                        </div>
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-xs font-medium text-muted-foreground">Last Name</label>
-                        <input
-                          type="text"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Enter last name"
-                          className="rounded-xl bg-background/50 border border-border px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+                        <div className="rounded-xl bg-background/50 border border-border px-4 py-3 text-sm text-foreground">
+                          {profileLoading ? "Loading..." : lastName || "—"}
+                        </div>
                       </div>
                     </div>
 
@@ -183,7 +201,7 @@ export default function Settings() {
                       <div className="rounded-xl bg-background/50 border border-border px-4 py-3 text-sm text-muted-foreground">
                         {profileLoading ? "Loading..." : profile?.email ?? "—"}
                       </div>
-                      <span className="text-xs text-muted-foreground">Email cannot be changed directly. Contact support if needed.</span>
+                      {/* <span className="text-xs text-muted-foreground">Email cannot be changed directly. Contact support if needed.</span> */}
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -210,16 +228,7 @@ export default function Settings() {
                   </div>
                 </section>
 
-                {/* Save Button */}
-                <div className="flex justify-end pt-2">
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isSaving}
-                    className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </button>
-                </div>
+
               </div>
             </>
           )}
@@ -427,6 +436,118 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-2xl bg-sidebar border border-border p-6 shadow-xl">
+            <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+            
+            <div className="space-y-4">
+              {/* Current Password */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-muted-foreground">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    disabled={isResettingPassword}
+                    className="w-full rounded-lg bg-background/50 border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-muted-foreground">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 8 characters)"
+                    disabled={isResettingPassword}
+                    className="w-full rounded-lg bg-background/50 border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-medium text-muted-foreground">Confirm New Password</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    disabled={isResettingPassword}
+                    className="w-full rounded-lg bg-background/50 border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Message */}
+              {resetMessage && (
+                <div className={`rounded-lg p-3 text-xs font-medium ${
+                  resetMessage.includes("successfully") 
+                    ? "bg-green-500/10 text-green-600 border border-green-500/30"
+                    : "bg-red-500/10 text-red-600 border border-red-500/30"
+                }`}>
+                  {resetMessage}
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setConfirmPassword("");
+                  setResetMessage("");
+                }}
+                disabled={isResettingPassword}
+                className="flex-1 rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-foreground px-4 py-2 text-sm font-medium transition-colors border border-border disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={isResettingPassword}
+                className="flex-1 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {isResettingPassword ? "Updating..." : "Change Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

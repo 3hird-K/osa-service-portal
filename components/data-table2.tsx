@@ -53,10 +53,6 @@ import {
 import { toast } from "sonner"
 import { z } from "zod"
 
-// --- Supabase Hooks (Ensure these are updated to handle Profiles, not Books) ---
-import { useDeleteBook } from "@/hooks/use-delete-book"
-import { useUpdateBook } from "@/hooks/use-update-book"
-
 // --- UI Components ---
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -169,7 +165,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
     if (Array.isArray(initialData)) setData(initialData)
   }, [initialData])
 
-  const { mutate: deleteProfile, isPending: isDeleting } = useDeleteBook() // Update to Profile Hook
   const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser() // Update to Profile Hook
 
   const [rowSelection, setRowSelection] = React.useState({})
@@ -193,17 +188,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
     }
   }, [selectedRow])
 
-  const confirmDelete = () => {
-    if (selectedRow) {
-      deleteProfile(selectedRow.id.toString(), {
-        onSuccess: () => {
-          setIsDeleteAlertOpen(false)
-          setSelectedRow(null)
-          toast.success("Member removed successfully")
-        },
-      })
-    }
-  }
 
   const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -239,7 +223,7 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarImage src={row.original.avatar_url ?? ""} />
-            <AvatarFallback>{row.original.firstname[0]}{row.original.lastname[0]}</AvatarFallback>
+            <AvatarFallback>{(row.original.firstname?.[0] ?? "U") + (row.original.lastname?.[0] ?? "")}</AvatarFallback>
           </Avatar>
           <span className="font-medium text-sm leading-none">{row.original.firstname} {row.original.lastname}</span>
         </div>
@@ -249,13 +233,14 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
       accessorKey: "account_type",
       header: "Role",
       cell: ({ row }) => {
-        const type = row.original.account_type;
-        const colorClass = type === "Admin" || type === "Staff" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-muted border-border text-muted-foreground";
-        const Icon = type === "Admin" ? IconShieldCheck : IconUser;
+        const type = row.original.account_type?.toLowerCase();
+        const colorClass = type === "admin" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-muted border-border text-muted-foreground";
+        const Icon = type === "admin" ? IconShieldCheck : IconUser;
+        const displayType = type === "admin" ? "Admin" : "Student";
         return (
           <Badge variant="outline" className={`gap-1 px-2 py-0.5 rounded-md font-normal ${colorClass}`}>
             <Icon className="h-3 w-3" />
-            {type}
+            {displayType}
           </Badge>
         );
       },
@@ -523,9 +508,8 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="User">User</SelectItem>
-                    <SelectItem value="Staff">Staff</SelectItem>
-                    <SelectItem value="Admin">Admin</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -542,23 +526,6 @@ export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* DELETE MODAL */}
-      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove Member?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete <strong>{selectedRow?.firstname} {selectedRow?.lastname}</strong>. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

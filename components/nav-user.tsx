@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { createClient } from "@/lib/supabase/client";
+import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { EditAccountDialog } from "./edit-account-dialog";
 
@@ -31,13 +31,11 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const { signOut } = useClerk();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  console.log("UserAvatar,", user.avatar)
 
   const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/auth/login");
+    await signOut({ redirectUrl: "/auth/login" });
   };
 
   // Logic to get initials safely

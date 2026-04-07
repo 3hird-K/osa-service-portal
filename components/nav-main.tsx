@@ -10,7 +10,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { AddBookDialog } from "./add-book-dialog"; // Import the component
 
 export function NavMain({
   items,
