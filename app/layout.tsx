@@ -27,19 +27,23 @@ export const metadata: Metadata = {
   ],
 };
 
+import { ClerkProvider } from '@clerk/nextjs'
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
-        <Providers>
-          {children}
-          <Toaster position="top-center" />
-        </Providers>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
+          <Providers>
+            {children}
+            <Toaster position="top-center" />
+          </Providers>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

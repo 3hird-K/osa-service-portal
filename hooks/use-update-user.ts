@@ -1,11 +1,11 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useUser } from "@clerk/nextjs";
 
 export function useUpdateUser() {
-  const supabase = createClient();
+  const { user: authUser } = useUser();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -17,31 +17,33 @@ export function useUpdateUser() {
       updates: Record<string, any>;
     }) => {
       // 1. Get the authenticated user ID
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      if (authError || !authUser) throw new Error("Authentication required");
+      if (!authUser) throw new Error("Authentication required");
 
       // 2. Fetch the current user's profile to check their role
-      const { data: currentUserProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("account_type")
-        .eq("id", authUser.id)
-        .single();
-
-      if (profileError || !currentUserProfile) throw new Error("Could not verify permissions");
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const profileRes = await fetch(`${apiUrl}/profiles/${authUser.id}`);
+      
+      if (!profileRes.ok) throw new Error("Could not verify permissions");
+      
+      const currentUserProfile = await profileRes.json();
 
       // 3. Role Check: Only Admin or Staff can proceed
-      const allowedRoles = ["Admin", "Staff"];
+      const allowedRoles = ["admin", "staff", "Admin", "Staff"];
       if (!allowedRoles.includes(currentUserProfile.account_type)) {
         throw new Error("Unauthorized: Only Admins or Staff can update profiles");
       }
 
       // 4. Perform the update on the target user
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("id", userId);
+      const updateRes = await fetch(`${apiUrl}/profiles/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
 
-      if (updateError) throw updateError;
+      if (!updateRes.ok) {
+        const error = await updateRes.json();
+        throw new Error(error.detail || "Failed to update profile");
+      }
       
       return { userId };
     },
@@ -51,7 +53,7 @@ export function useUpdateUser() {
       queryClient.invalidateQueries({ queryKey: ["profile", variables.userId] });
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       // Match the key used in your useUsers hook
-      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["profiles-here"] });
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update profile");

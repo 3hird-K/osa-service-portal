@@ -1,5 +1,5 @@
-import { EnvVarWarning } from "@/components/env-var-warning";
-import { AuthButton } from "@/components/auth-button";
+import { SignInButton, UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { hasEnvVars } from "@/lib/utils";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,7 +12,8 @@ import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { link } from "fs";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
@@ -39,7 +40,18 @@ export default function Home() {
                 <div className="h-8 w-20 bg-muted animate-pulse rounded-md" />
               }
             >
-              {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
+              {!userId ? (
+                  <div className="flex gap-2">
+                    <Link href="/auth/sign-up">
+                      <Button variant={"outline"} className="w-full">Sign Up</Button>
+                    </Link>
+                    <Link href="/auth/login">
+                      <Button className="w-full">Sign In</Button>
+                    </Link>
+                  </div>
+              ) : (
+                <UserButton />
+              )}
             </Suspense>
           </div>
         </nav>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,7 +40,7 @@ export function EditAccountDialog({ user, open, onOpenChange }: EditAccountDialo
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const supabase = createClient();
+  const { user: clerkUser } = useUser();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -58,28 +58,11 @@ export function EditAccountDialog({ user, open, onOpenChange }: EditAccountDialo
 
     try {
       setIsUploading(true);
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
-
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      
+      if (clerkUser) {
+        await clerkUser.setProfileImage({ file });
+        queryClient.invalidateQueries({ queryKey: ["profile"] });
+      }
       
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -95,16 +78,12 @@ export function EditAccountDialog({ user, open, onOpenChange }: EditAccountDialo
     setIsLoading(true);
 
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          firstname: firstName,
-          lastname: lastName,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) throw error;
+      if (clerkUser) {
+        await clerkUser.update({
+          firstName,
+          lastName,
+        });
+      }
       
       onOpenChange(false);
       queryClient.invalidateQueries({ queryKey: ["profile"] });
@@ -141,7 +120,7 @@ export function EditAccountDialog({ user, open, onOpenChange }: EditAccountDialo
           <div className="flex flex-col items-center justify-center">
             <div className="relative group">
               <Avatar className="h-24 w-24 border-4 border-background shadow-xl ring-1 ring-muted">
-                <AvatarImage src={previewUrl || user.avatar} className="object-cover" />
+                <AvatarImage src={previewUrl || clerkUser?.imageUrl || user.avatar} className="object-cover" />
                 <AvatarFallback className="text-xl bg-secondary">
                   {firstName?.[0]}{lastName?.[0]}
                 </AvatarFallback>
