@@ -76,7 +76,7 @@ export default function Settings() {
     setResetMessage("");
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000"}/users/${user.id}/change-password`,
+        `${process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com"}/users/${user.id}/change-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

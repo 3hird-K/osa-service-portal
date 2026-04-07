@@ -16,7 +16,7 @@ export function useUsers() {
   return useQuery({
     queryKey: ["profiles-here"], 
     queryFn: async (): Promise<User[]> => {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://server-osa-service.onrender.com';
       const response = await fetch(`${apiUrl}/profiles`, {
         cache: 'no-store',
       });

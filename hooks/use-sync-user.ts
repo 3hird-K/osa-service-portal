@@ -17,7 +17,7 @@ export function useSyncUser() {
   //     if (!user?.id || !isLoaded) return;
 
   //     try {
-  //       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  //       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
   //       const response = await fetch(`${apiUrl}/sync-user/${user.id}`, {
   //         method: "POST",
   //         headers: {

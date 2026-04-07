@@ -21,7 +21,7 @@ export function useProfile() {
       if (!user) throw new Error("Not authenticated");
       
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/users/${user.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://server-osa-service.onrender.com'}/users/${user.id}`);
         if (!res.ok) {
           if (res.status === 404) {
             // If FastAPI hasn't synced from webhook yet, gracefully return a default mapping
