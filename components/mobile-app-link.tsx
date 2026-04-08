@@ -12,7 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { StatusIndicator } from "@/components/status-indicator";
 import { FeatureCard } from "@/components/feature-card";
-import MobileAppQR from "@/assets/march-30-update.png";
+import MobileAppQR from "@/assets/april-8-update.png";
 
 const mobileFeatures = [
   {
