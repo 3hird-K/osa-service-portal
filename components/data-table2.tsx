@@ -3,41 +3,6 @@
 import * as React from "react"
 import { format } from "date-fns"
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core"
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import {
-  IconChevronDown,
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-  IconDotsVertical,
-  IconGripVertical,
-  IconLayoutColumns,
-  IconLoader2,
-  IconSearch,
-  IconUser,
-  IconCalendar,
-  IconShieldCheck,
-  IconMail,
-  IconAdjustmentsHorizontal
-} from "@tabler/icons-react"
-import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -46,43 +11,27 @@ import {
   useReactTable,
   type ColumnDef,
   type ColumnFiltersState,
-  type Row,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table"
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconChevronsLeft,
+  IconChevronsRight,
+  IconSearch,
+  IconUser,
+  IconShieldCheck,
+  IconLoader2,
+  IconX,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 import { z } from "zod"
+import { useUser } from "@clerk/nextjs"
+import { useQueryClient } from "@tanstack/react-query"
 
-// --- UI Components ---
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -100,432 +49,495 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Tabs, TabsContent } from "@/components/ui/tabs"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { useUpdateUser } from "@/hooks/use-update-user"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
-// --- Schema ---
 export const schema = z.object({
   id: z.string().or(z.number()),
-  firstname: z.string(),
-  lastname: z.string(),
+  firstname: z.string().nullable().optional(),
+  lastname: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
   avatar_url: z.string().optional().nullable(),
   account_type: z.string(),
   updated_at: z.string(),
+  is_online: z.boolean().optional(),
 })
 
 type DataRow = z.infer<typeof schema>
 
-function DragHandle({ id }: { id: string | number }) {
-  const { attributes, listeners } = useSortable({ id })
+// ---------- ONLINE DOT ----------
+function OnlineDot({ online }: { online?: boolean }) {
+  if (!online) return null
   return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent cursor-grab active:cursor-grabbing"
-    >
-      <IconGripVertical className="size-3" />
-    </Button>
+    <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-background shadow-sm" />
   )
 }
 
-function DraggableRow({ row }: { row: Row<DataRow> }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  })
-
+// ---------- ROLE BADGE ----------
+function RoleBadge({ type }: { type: string }) {
+  const normalized = type?.toLowerCase()
+  const isAdmin = normalized === "admin"
   return (
-    <TableRow
-      ref={setNodeRef}
-      data-state={row.getIsSelected() && "selected"}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
-      }}
+    <Badge
+      variant="outline"
+      className={`gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${isAdmin
+        ? "bg-primary/10 text-primary border-primary/30"
+        : "bg-muted text-muted-foreground border-border"
+        }`}
     >
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
-    </TableRow>
+      {isAdmin ? <IconShieldCheck className="h-3 w-3" /> : <IconUser className="h-3 w-3" />}
+      {isAdmin ? "Admin" : "Student"}
+    </Badge>
   )
 }
 
-export function DataTable2({ data: initialData = [] }: { data: DataRow[] }) {
-  const [data, setData] = React.useState<DataRow[]>(() => Array.isArray(initialData) ? initialData : [])
+// ---------- RIGHT SHEET PANEL ----------
+interface UserSheetProps {
+  user: DataRow | null
+  isAdmin: boolean
+  onClose: () => void
+  onSaved: () => void
+}
+
+function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
+  const [firstName, setFirstName] = React.useState(user?.firstname ?? "")
+  const [lastName, setLastName] = React.useState(user?.lastname ?? "")
+  const [accountType, setAccountType] = React.useState(user?.account_type ?? "student")
+  const [isSaving, setIsSaving] = React.useState(false)
+  const [showDeleteAlert, setShowDeleteAlert] = React.useState(false)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  React.useEffect(() => {
+    if (user) {
+      setFirstName(user.firstname ?? "")
+      setLastName(user.lastname ?? "")
+      setAccountType(user.account_type)
+    }
+  }, [user])
+
+  if (!user) return null
+
+  const displayName = `${user.firstname ?? ""} ${user.lastname ?? ""}`.trim() || "Unknown User"
+  const initials = `${user.firstname?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase() || "?"
+  const roleDescription =
+    accountType === "admin"
+      ? "Administrators have full CRUD access. Students can view data but require Admin approval for any changes."
+      : "Students can view data, but any edits require Admin approval before going live."
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const res = await fetch("/api/admin/update-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUserId: user.id,
+          firstName,
+          lastName,
+          account_type: accountType,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Update failed")
+      toast.success("Profile updated successfully")
+      onSaved()
+      onClose()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update")
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    setIsDeleting(true)
+    try {
+      const res = await fetch("/api/admin/delete-user", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: user.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? "Delete failed")
+      toast.success("User deleted")
+      onSaved()
+      onClose()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete")
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteAlert(false)
+    }
+  }
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+      {/* Sheet */}
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-sm bg-sidebar border-l border-border shadow-2xl flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">Edit User Profile</h2>
+          <button
+            onClick={onClose}
+            className="rounded-full p-1.5 hover:bg-muted text-muted-foreground transition-colors"
+          >
+            <IconX className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center gap-2 py-6 border-b border-border">
+          <div className="relative">
+            <Avatar className="h-20 w-20 border-2 border-border">
+              <AvatarImage src={user.avatar_url ?? ""} />
+              <AvatarFallback className="text-xl bg-muted text-foreground">{initials}</AvatarFallback>
+            </Avatar>
+            <OnlineDot online={user.is_online} />
+          </div>
+          <div className="text-center">
+            <p className="font-semibold text-foreground">{displayName}</p>
+            <p className="text-xs text-muted-foreground">{user.email ?? "No email"}</p>
+          </div>
+        </div>
+
+        {/* Form */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">First Name</Label>
+              <Input
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={!isAdmin}
+                className="bg-background border-border text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Last Name</Label>
+              <Input
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={!isAdmin}
+                className="bg-background border-border text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Account Type (Role)</Label>
+            <Select value={accountType} onValueChange={setAccountType} disabled={!isAdmin}>
+              <SelectTrigger className="w-full bg-background border-border text-sm">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrator (Full Access)</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg bg-muted/50 border border-border p-3">
+            <p className="text-xs text-muted-foreground leading-relaxed">{roleDescription}</p>
+          </div>
+
+          {!isAdmin && (
+            <p className="text-xs text-muted-foreground text-center">
+              You need admin access to edit profiles.
+            </p>
+          )}
+        </div>
+
+        {/* Footer Buttons */}
+        {isAdmin && (
+          <div className="px-6 py-4 border-t border-border space-y-2">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 border-border"
+                onClick={onClose}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={handleSave}
+                disabled={isSaving}
+              >
+                {isSaving && <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={() => setShowDeleteAlert(true)}
+              disabled={isSaving || isDeleting}
+            >
+              Delete Profile
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {displayName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete their Clerk account and profile data. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting && <IconLoader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
+              Yes, Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
+// ---------- MAIN TABLE ----------
+export function DataTable2({
+  data: initialData = [],
+  onRefresh,
+  extraControls
+}: {
+  data: DataRow[];
+  onRefresh?: () => void;
+  extraControls?: React.ReactNode;
+}) {
+  const [data, setData] = React.useState<DataRow[]>(() => (Array.isArray(initialData) ? initialData : []))
+  const { user: currentUser } = useUser()
+  const queryClient = useQueryClient()
 
   React.useEffect(() => {
     if (Array.isArray(initialData)) setData(initialData)
   }, [initialData])
 
-  const { mutate: updateProfile, isPending: isUpdating } = useUpdateUser() // Update to Profile Hook
-
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = React.useState("")
-
+  const [columnVisibility] = React.useState<VisibilityState>({})
   const [selectedRow, setSelectedRow] = React.useState<DataRow | null>(null)
-  const [isViewOpen, setIsViewOpen] = React.useState(false)
-  const [isEditOpen, setIsEditOpen] = React.useState(false)
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = React.useState(false)
 
-  // Account Type Dropdown State
-  const [accountType, setAccountType] = React.useState<string>("")
-
-  // Sync state when editing
+  // Check if the current viewer is an admin
+  const [viewerIsAdmin, setViewerIsAdmin] = React.useState(false)
   React.useEffect(() => {
-    if (selectedRow) {
-      setAccountType(selectedRow.account_type)
-    }
-  }, [selectedRow])
-
-
-  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    if (selectedRow) {
-      updateProfile({
-        userId: selectedRow.id as any, // Cast to any if hook still named bookId
-        updates: {
-          firstname: formData.get("firstname") as string,
-          lastname: formData.get("lastname") as string,
-          account_type: accountType, // From Select state
-        }
-      }, {
-        onSuccess: () => {
-          setIsEditOpen(false)
-          setSelectedRow(null)
-          toast.success("Profile updated")
-        }
+    if (!currentUser?.id) return
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com"
+    fetch(`${apiUrl}/profiles/${currentUser.id}`)
+      .then((r) => r.json())
+      .then((profile) => {
+        setViewerIsAdmin(profile?.account_type?.toLowerCase() === "admin")
       })
-    }
-  }
+      .catch(() => { })
+  }, [currentUser?.id])
 
   const columns = React.useMemo<ColumnDef<DataRow>[]>(() => [
     {
-      id: "drag",
-      header: () => null,
-      cell: ({ row }) => <DragHandle id={row.original.id} />,
-    },
-    {
-      id: "user",
-      header: "Member",
-      cell: ({ row }) => (
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={row.original.avatar_url ?? ""} />
-            <AvatarFallback>{(row.original.firstname?.[0] ?? "U") + (row.original.lastname?.[0] ?? "")}</AvatarFallback>
-          </Avatar>
-          <span className="font-medium text-sm leading-none">{row.original.firstname} {row.original.lastname}</span>
-        </div>
-      )
-    },
-    {
-      accessorKey: "account_type",
-      header: "Role",
+      accessorKey: "id",
+      header: "Profile ID",
       cell: ({ row }) => {
-        const type = row.original.account_type?.toLowerCase();
-        const colorClass = type === "admin" ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-muted border-border text-muted-foreground";
-        const Icon = type === "admin" ? IconShieldCheck : IconUser;
-        const displayType = type === "admin" ? "Admin" : "Student";
+        const shortId = String(row.original.id).slice(0, 8).toUpperCase()
         return (
-          <Badge variant="outline" className={`gap-1 px-2 py-0.5 rounded-md font-normal ${colorClass}`}>
-            <Icon className="h-3 w-3" />
-            {displayType}
-          </Badge>
-        );
+          <div className="flex items-center gap-2">
+            {row.original.is_online && (
+              <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            )}
+            <button
+              onClick={() => setSelectedRow(row.original)}
+              className="font-mono text-xs text-primary hover:underline underline-offset-2 cursor-pointer transition-colors"
+            >
+              {shortId}
+            </button>
+          </div>
+        )
       },
     },
     {
-      accessorKey: "updated_at",
-      header: "Last Updated",
+      accessorKey: "firstname",
+      header: "First Name",
       cell: ({ row }) => (
-        <p className="text-sm text-muted-foreground">
-          {format(new Date(row.original.updated_at), "MMM dd, yyyy")}
-        </p>
-      )
+        <span className="font-medium text-sm text-foreground">{row.original.firstname ?? "—"}</span>
+      ),
     },
     {
-      id: "actions",
+      accessorKey: "lastname",
+      header: "Last Name",
       cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8">
-              <IconDotsVertical className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => { setSelectedRow(row.original); setIsViewOpen(true); }}>
-              View Details
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => { setSelectedRow(row.original); setIsEditOpen(true); }}>
-              Edit Profile
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => { setSelectedRow(row.original); setIsDeleteAlertOpen(true); }}
-            >
-              Delete User
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <span className="text-sm text-foreground">{row.original.lastname ?? "—"}</span>
       ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{row.original.email ?? "—"}</span>
+      ),
+    },
+    {
+      accessorKey: "account_type",
+      header: "Account Type",
+      cell: ({ row }) => <RoleBadge type={row.original.account_type} />,
     },
   ], [])
 
   const table = useReactTable({
     data: data || [],
     columns,
-    state: { sorting, columnVisibility, rowSelection, columnFilters, globalFilter },
+    state: { sorting, columnVisibility, columnFilters, globalFilter },
     onGlobalFilterChange: setGlobalFilter,
-    getRowId: (row) => row.id.toString(),
-    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => String(row.id),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: 10 } },
   })
 
-  // Fixed safety for dataIds mapping
-  const dataIds = React.useMemo(() => (Array.isArray(data) ? data.map((d) => d.id) : []), [data])
-  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor), useSensor(KeyboardSensor))
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setData((prev) => {
-        const oldIndex = dataIds.indexOf(active.id as any)
-        const newIndex = dataIds.indexOf(over.id as any)
-        return arrayMove(prev, oldIndex, newIndex)
-      })
-    }
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["profiles-here"] })
+    onRefresh?.()
   }
 
   return (
     <div className="w-full space-y-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between py-4 gap-4">
-        {/* <div className="flex items-center gap-2">
-          <Button variant="outline" className="bg-card border-border h-10 px-4 text-sm font-normal justify-between w-[200px]">
-            All Users <IconChevronDown className="h-4 w-4 opacity-50 ml-2" />
-          </Button>
-        </div> */}
-
-        <div className="flex items-center gap-3">
-          <div className="relative w-full sm:w-64">
-            <IconSearch className="absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search users..."
-              value={globalFilter ?? ""}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pr-9 bg-card border-border h-10 rounded-md"
-            />
-          </div>
-          {/* <Button variant="outline" className="bg-card border-border h-10 px-4 gap-2 text-sm font-normal">
-            <IconAdjustmentsHorizontal className="h-4 w-4" />
-            Customize
-            <IconChevronDown className="h-4 w-4 opacity-50 ml-1" />
-          </Button> */}
+      {/* Search */}
+      <div className="flex items-center gap-3">
+        {extraControls}
+        <div className="relative w-full sm:w-60">
+          <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="pl-9 bg-card border-border h-10 rounded-lg text-sm"
+          />
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
-        <DndContext
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
-          onDragEnd={handleDragEnd}
-          sensors={sensors}
-        >
-          <Table>
-            <TableHeader className="bg-transparent hover:bg-transparent border-b border-border">
-              {table.getHeaderGroups().map(hg => (
-                <TableRow key={hg.id} className="border-none hover:bg-transparent">
-                  {hg.headers.map(header => (
-                    <TableHead key={header.id} className="text-xs font-semibold text-muted-foreground h-12">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
+      {/* Table */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((hg) => (
+              <TableRow key={hg.id} className="border-b border-border hover:bg-transparent">
+                {hg.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="text-xs font-semibold text-muted-foreground h-11 bg-muted/30"
+                  >
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.length > 0 ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="border-b border-border hover:bg-muted/30 transition-colors cursor-default"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="py-3">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.length > 0 ? (
-                <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
-                  {table.getRowModel().rows.map(row => (
-                    <DraggableRow key={row.id} row={row} />
-                  ))}
-                </SortableContext>
-              ) : (
-                <TableRow className="border-b-[#2c2d3c]">
-                  <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <IconSearch className="h-8 w-8 opacity-20" />
-                      <p>No members found</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </DndContext>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <IconSearch className="h-8 w-8 opacity-20" />
+                    <p>No users found</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
-      <div className="flex items-center justify-between py-4 text-sm text-muted-foreground">
-        <div>
-          {Object.keys(rowSelection).length} of {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+      {/* Pagination */}
+      <div className="flex items-center justify-between py-2 text-sm text-muted-foreground">
+        <span>
+          Showing {table.getFilteredRowModel().rows.length} of {data.length} users
+        </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium">Rows per page</span>
             <Select
               value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value))
-              }}
+              onValueChange={(v) => table.setPageSize(Number(v))}
             >
-              <SelectTrigger className="h-8 w-[70px] bg-card border-border">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+              <SelectTrigger className="h-8 w-[70px] bg-card border-border text-xs">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
+                {[10, 20, 30, 50].map((size) => (
+                  <SelectItem key={size} value={`${size}`}>{size}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
-              onClick={() => table.setPageIndex(0)}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to first page</span>
+          <span className="text-sm font-medium">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+          </span>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
               <IconChevronsLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 bg-card border-border"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to previous page</span>
+            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
               <IconChevronLeft className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 bg-card border-border"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to next page</span>
+            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
               <IconChevronRight className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
-              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to last page</span>
+            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
               <IconChevronsRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* VIEW MODAL */}
-      <Dialog open={isViewOpen} onOpenChange={setIsViewOpen}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
-          <div className="bg-muted/50 p-8 flex flex-col items-center gap-4">
-            <Avatar className="h-20 w-20 border-2 border-background">
-              <AvatarImage src={selectedRow?.avatar_url ?? ""} />
-              <AvatarFallback>{selectedRow?.firstname?.[0]}</AvatarFallback>
-            </Avatar>
-            <div className="text-center">
-              <h3 className="text-xl font-bold">{selectedRow?.firstname} {selectedRow?.lastname}</h3>
-              <Badge variant="outline">{selectedRow?.account_type}</Badge>
-            </div>
-          </div>
-          <div className="p-6 space-y-4 text-sm">
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">User ID</span>
-              <span className="font-mono">{selectedRow?.id}</span>
-            </div>
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-muted-foreground">Member Since</span>
-              <span>{selectedRow?.updated_at ? format(new Date(selectedRow.updated_at), "PPP") : "N/A"}</span>
-            </div>
-            <Button className="w-full" variant="outline" onClick={() => setIsViewOpen(false)}>Close</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* EDIT MODAL - UPDATED WITH SELECT */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <form onSubmit={handleEditSubmit}>
-            <DialogHeader>
-              <DialogTitle>Edit Member Profile</DialogTitle>
-              <DialogDescription>
-                Update member credentials and role permissions.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="firstname">First Name</Label>
-                <Input id="firstname" name="firstname" defaultValue={selectedRow?.firstname} required />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="lastname">Last Name</Label>
-                <Input id="lastname" name="lastname" defaultValue={selectedRow?.lastname} required />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="account_type">Account Type</Label>
-                <Select value={accountType} onValueChange={setAccountType}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating && <IconLoader2 className="animate-spin mr-2 h-4 w-4" />}
-                Save Changes
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
+      {/* Right Sheet */}
+      {selectedRow && (
+        <UserSheet
+          user={selectedRow}
+          isAdmin={viewerIsAdmin}
+          onClose={() => setSelectedRow(null)}
+          onSaved={handleRefresh}
+        />
+      )}
     </div>
   )
 }

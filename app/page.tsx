@@ -10,6 +10,7 @@ import { WebAppLink } from "@/components/web-app-link";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { link } from "fs";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default async function Home() {
   const { userId } = await auth();
@@ -40,14 +41,14 @@ export default async function Home() {
               }
             >
               {!userId ? (
-                  <div className="flex gap-2">
-                    <Link href="/auth/login">
-                      <Button variant={"outline"} className="w-full">Sign In</Button>
-                    </Link>
-                    <Link href="/auth/sign-up">
-                      <Button className="w-full">Sign Up</Button>
-                    </Link>
-                  </div>
+                <div className="flex gap-2">
+                  <Link href="/auth/login">
+                    <Button variant={"outline"} className="w-full">Sign In</Button>
+                  </Link>
+                  <Link href="/auth/sign-up">
+                    <Button className="w-full">Sign Up</Button>
+                  </Link>
+                </div>
               ) : (
                 <UserButton />
               )}
@@ -76,6 +77,7 @@ export default async function Home() {
               USTP student-3r1
             </a>
           </p>
+          <ThemeSwitcher />
         </footer>
       </div>
     </main>

@@ -1,119 +1,149 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { IconUser, IconShieldCheck } from "@tabler/icons-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DataTable2 } from "@/components/data-table2";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useProfile } from "@/hooks/use-profile";
+
+const TableSkeleton = () => (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="grid grid-cols-5 gap-4 p-4 border-b border-border bg-muted/30">
+            {["w-16", "w-20", "w-20", "w-32", "w-16"].map((w, i) => (
+                <Skeleton key={i} className={`h-4 ${w}`} />
+            ))}
+        </div>
+        {[...Array(5)].map((_, i) => (
+            <div key={i} className="grid grid-cols-5 gap-4 p-4 items-center border-b border-border last:border-0">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-6 w-16 rounded-full" />
+            </div>
+        ))}
+    </div>
+);
 
 export default function ManageUsersPage() {
-    const [studentsList, setStudentsList] = useState<any[]>([]);
-    const [adminList, setAdminList] = useState<any[]>([]);
+    const [allUsers, setAllUsers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [roleFilter, setRoleFilter] = useState("all");
+    const { data: profile } = useProfile();
+
+    const isAdmin = profile?.account_type?.toLowerCase() === "admin";
+
+    const fetchUsers = useCallback(async (isBackground = false) => {
+        try {
+            if (!isBackground) setIsLoading(true);
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
+            const [studentsRes, adminsRes] = await Promise.all([
+                fetch(`${baseUrl}/students`),
+                fetch(`${baseUrl}/admins`),
+            ]);
+
+            if (!studentsRes.ok || !adminsRes.ok) {
+                console.warn("Backend fetch failed, using empty data");
+            }
+
+            const [students, admins] = await Promise.all([
+                studentsRes.ok ? studentsRes.json() : Promise.resolve([]),
+                adminsRes.ok ? adminsRes.json() : Promise.resolve([]),
+            ]);
+
+            const merged = [...admins, ...students];
+            const seen = new Set();
+            const deduped = merged.filter((u) => {
+                if (!u.id || seen.has(u.id)) return false;
+                seen.add(u.id);
+                return true;
+            });
+
+            setAllUsers(deduped);
+            setError(null);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred");
+        } finally {
+            if (!isBackground) setIsLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setIsLoading(true);
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
-                
-                // Fetch students and admins in parallel
-                const [studentsResponse, adminsResponse] = await Promise.all([
-                    fetch(`${baseUrl}/students`),
-                    fetch(`${baseUrl}/admins`)
-                ]);
-
-                console.log("Hello")
-                console.log("hello", JSON.stringify(studentsResponse));
-                console.log("hello", JSON.stringify(adminsResponse));
-                
-                if (!studentsResponse.ok) {
-                    const studentError = await studentsResponse.text();
-                    throw new Error(`Failed to fetch students (${studentsResponse.status}): ${studentError}`);
-                }
-                if (!adminsResponse.ok) {
-                    const adminError = await adminsResponse.text();
-                    throw new Error(`Failed to fetch admins (${adminsResponse.status}): ${adminError}`);
-                }
-                
-                const [studentsData, adminsData] = await Promise.all([
-                    studentsResponse.json(),
-                    adminsResponse.json()
-                ]);
-                
-                setStudentsList(studentsData);
-                setAdminList(adminsData);
-                setError(null);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : "An error occurred";
-                setError(errorMessage);
-                console.error("Error fetching users:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchUsers();
-    }, []);
+    }, [fetchUsers]);
+
+    // Auto-refresh the user list every 10 seconds to keep status dots accurate
+    // Pass true to keep the refresh silent in the background
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchUsers(true);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [fetchUsers]);
+
+    const students = allUsers.filter((u) => u.account_type?.toLowerCase() !== "admin");
+    const admins = allUsers.filter((u) => u.account_type?.toLowerCase() === "admin");
 
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-background min-h-screen text-foreground">
-            {/* Header Section */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/10">
-                <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-white/90">
-                        Manage Users <span className="text-muted-foreground font-normal">— Dashboard</span>
-                    </h2>
+            {/* Header */}
+            <div className="pb-4 border-b border-border/30">
+                <div className="flex items-center gap-3 mb-1">
+                    <h2 className="text-3xl font-bold tracking-tight">Manage Users</h2>
+                    <Badge className="rounded-full px-3 py-1 text-xs font-semibold bg-primary/20 text-primary border border-primary/30">
+                        {isLoading ? "—" : allUsers.length} Total Profiles
+                    </Badge>
+                    {isAdmin && (
+                        <Badge className="rounded-full px-3 py-1 text-xs font-semibold bg-primary text-primary-foreground">
+                            Admin Mode Active
+                        </Badge>
+                    )}
                 </div>
+                <p className="text-sm text-muted-foreground">
+                    {isAdmin
+                        ? "You have administrative rights. You can upgrade roles, delete app data, and manage personnel."
+                        : "Viewing all registered users. Contact an admin to make changes."}
+                </p>
             </div>
 
-            {/* Error Display */}
             {error && (
-                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 text-sm">
+                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
                     Error: {error}
                 </div>
             )}
 
-            {/* Loading State */}
-            {isLoading && (
-                <div className="p-4 rounded-lg bg-muted/50 border border-border text-muted-foreground text-sm">
-                    Loading users...
-                </div>
-            )}
-
-            {/* Tabs & Datatable Section */}
-            {!isLoading && (
-                <Tabs defaultValue="students" className="space-y-6 pt-2">
-                    <div className="flex items-center justify-between">
-                        <TabsList className="bg-card border border-border p-1 rounded-lg h-12">
-                            <TabsTrigger value="students" className="px-6 gap-2 h-9 data-[state=active]:bg-[#2c2d3c] data-[state=active]:text-white text-muted-foreground rounded-md transition-all">
-                                <IconUser size={16} />
-                                Students
-                                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px] bg-background text-muted-foreground border-none">
-                                    {studentsList.length}
-                                </Badge>
-                            </TabsTrigger>
-                            <TabsTrigger value="admin" className="px-6 gap-2 h-9 data-[state=active]:bg-[#2c2d3c] data-[state=active]:text-white text-muted-foreground rounded-md transition-all">
-                                <IconShieldCheck size={16} />
-                                Admin
-                                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px] bg-background text-muted-foreground border-none">
-                                    {adminList.length}
-                                </Badge>
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-
-                    <div className="mt-2">
-                        <TabsContent value="students" className="m-0 border-none p-0 outline-none">
-                            <DataTable2 data={studentsList} />
-                        </TabsContent>
-                        <TabsContent value="admin" className="m-0 border-none p-0 outline-none">
-                            <DataTable2 data={adminList} />
-                        </TabsContent>
-                    </div>
-                </Tabs>
-            )}
+            {/* Table Area */}
+            <div className="mt-2">
+                {isLoading ? (
+                    <TableSkeleton />
+                ) : (
+                    <DataTable2 
+                        data={roleFilter === "all" ? allUsers : roleFilter === "admin" ? admins : students} 
+                        onRefresh={fetchUsers}
+                        extraControls={
+                            <Select defaultValue="all" onValueChange={(v) => setRoleFilter(v)}>
+                                <SelectTrigger className="w-[180px] bg-card border-border h-10 rounded-lg">
+                                    <SelectValue placeholder="Filter by role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Users</SelectItem>
+                                    <SelectItem value="student">Students</SelectItem>
+                                    <SelectItem value="admin">Admins</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        }
+                    />
+                )}
+            </div>
         </div>
     );
 }

@@ -20,11 +20,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarTrigger,
-  SidebarInput,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image"
@@ -78,37 +73,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarContent>
         <NavMain items={staticData.navMain} />
-
-        {/* Pass the FILTERED items here instead of staticData.documents */}
-        {isLoading ? (
-          <div className="px-4 space-y-2 mt-4">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-          </div>
-        ) : (
-          <NavDocuments items={filteredDocuments} />
-        )}
-
+        <NavDocuments items={filteredDocuments} />
         <NavSecondary items={staticData.navSecondary} className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>
-        {isLoading ? (
-          <div className="p-4">
-            <Skeleton className="h-12 w-full rounded-lg" />
-          </div>
-        ) : (
-          <NavUser
-            user={{
-              id: profile?.id ?? "",
-              firstName: profile?.firstname || "User",
-              lastName: profile?.lastname || "",
-              email: profile?.email || "",
-              avatar: profile?.avatar_url || "",
-              account_type: profile?.account_type || "User",
-            }}
-          />
-        )}
+        <NavUser
+          user={{
+            id: profile?.id ?? "",
+            firstName: profile?.firstname || "User",
+            lastName: profile?.lastname || "",
+            email: profile?.email || "hello@gmail.com",
+            avatar: profile?.avatar_url || "",
+            account_type: profile?.account_type || "student",
+          }}
+        />
       </SidebarFooter>
     </Sidebar>
   );

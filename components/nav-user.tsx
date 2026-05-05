@@ -35,6 +35,13 @@ export function NavUser({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const logout = async () => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
+    try {
+      // Notify backend that user is logging out
+      await fetch(`${baseUrl}/users/${user.id}/logout`, { method: "POST" });
+    } catch (error) {
+      console.error("Failed to notify backend of logout", error);
+    }
     await signOut({ redirectUrl: "/auth/login" });
   };
 

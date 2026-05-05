@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { ThemeSwitcher } from "./theme-switcher"
 
 export function SiteHeader() {
   return (
@@ -12,6 +13,9 @@ export function SiteHeader() {
           className="mx-2 data-[orientation=vertical]:h-4 bg-border"
         />
         <h1 className="text-base font-medium">Osa Service Portal</h1>
+        <div className="ml-auto">
+          <ThemeSwitcher />
+        </div>
         {/* <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
             <a

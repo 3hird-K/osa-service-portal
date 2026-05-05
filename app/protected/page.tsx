@@ -48,7 +48,7 @@ export default function DashboardPage() {
       {/* Header Section */}
       <div className="flex items-center justify-between pb-4 border-b border-border/10">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-white/90">
+          <h2 className="text-xl font-semibold tracking-tight">
             OSA Service Portal <span className="text-muted-foreground font-normal">— USTP Dashboard</span>
           </h2>
         </div>
