@@ -55,18 +55,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="space-y-4 pt-6 pb-2">
         <div className="flex items-center gap-3 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
           <a href="/" className="flex items-center gap-3 w-full overflow-hidden group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center">
-            <div className="flex bg-[#1c1d22] p-1.5 rounded-lg border border-white/5 shadow-sm justify-center items-center shrink-0">
+            <div className="flex bg-[#1c1d22] p-2 rounded-xl border border-white/10 shadow-sm justify-center items-center shrink-0 transition-transform hover:scale-105">
               <Image
                 src={Logo}
                 alt="Osa Logo"
-                width={20}
-                height={20}
+                width={28}
+                height={28}
                 className="block object-contain"
               />
             </div>
-            <span className="font-semibold text-sm truncate group-data-[collapsible=icon]:hidden">
-              Osa Service Portal
-            </span>
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+              <span className="font-bold text-base tracking-tight truncate text-foreground/90">
+                OSA Service Portal
+              </span>
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest truncate">
+                Management System
+              </span>
+            </div>
           </a>
         </div>
       </SidebarHeader>

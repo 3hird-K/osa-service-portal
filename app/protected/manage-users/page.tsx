@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { IconUser, IconShieldCheck } from "@tabler/icons-react";
 import { 
     Select, 
@@ -34,17 +35,14 @@ const TableSkeleton = () => (
 );
 
 export default function ManageUsersPage() {
-    const [allUsers, setAllUsers] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [roleFilter, setRoleFilter] = useState("all");
     const { data: profile } = useProfile();
 
     const isAdmin = profile?.account_type?.toLowerCase() === "admin";
 
-    const fetchUsers = useCallback(async (isBackground = false) => {
-        try {
-            if (!isBackground) setIsLoading(true);
+    const { data: allUsers = [], isLoading, error, refetch: fetchUsers } = useQuery({
+        queryKey: ["manage-users-list"],
+        queryFn: async () => {
             const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
             const [studentsRes, adminsRes] = await Promise.all([
                 fetch(`${baseUrl}/students`),
@@ -62,36 +60,17 @@ export default function ManageUsersPage() {
 
             const merged = [...admins, ...students];
             const seen = new Set();
-            const deduped = merged.filter((u) => {
+            return merged.filter((u: any) => {
                 if (!u.id || seen.has(u.id)) return false;
                 seen.add(u.id);
                 return true;
             });
+        },
+        refetchInterval: 10000,
+    });
 
-            setAllUsers(deduped);
-            setError(null);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "An error occurred");
-        } finally {
-            if (!isBackground) setIsLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
-
-    // Auto-refresh the user list every 10 seconds to keep status dots accurate
-    // Pass true to keep the refresh silent in the background
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchUsers(true);
-        }, 10000);
-        return () => clearInterval(interval);
-    }, [fetchUsers]);
-
-    const students = allUsers.filter((u) => u.account_type?.toLowerCase() !== "admin");
-    const admins = allUsers.filter((u) => u.account_type?.toLowerCase() === "admin");
+    const students = allUsers.filter((u: any) => u.account_type?.toLowerCase() !== "admin");
+    const admins = allUsers.filter((u: any) => u.account_type?.toLowerCase() === "admin");
 
     return (
         <div className="flex-1 space-y-6 p-8 pt-6 bg-background min-h-screen text-foreground">
@@ -117,7 +96,7 @@ export default function ManageUsersPage() {
 
             {error && (
                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
-                    Error: {error}
+                    Error: {error instanceof Error ? error.message : "An error occurred"}
                 </div>
             )}
 
