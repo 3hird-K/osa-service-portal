@@ -512,7 +512,14 @@ export function TasksTable() {
             <div className="bg-white p-6 rounded-3xl shadow-inner border border-border/10">
               <QRCodeCanvas
                 id="task-qr-code"
-                value={selectedTask?.id || ""}
+                value={JSON.stringify({
+                  id: selectedTask?.id,
+                  title: selectedTask?.title,
+                  description: selectedTask?.description,
+                  location: selectedTask?.location,
+                  hours: selectedTask?.hours,
+                  assignee_id: selectedTask?.assigned_to || selectedTask?.assignee?.id
+                })}
                 size={220}
                 level="H"
                 includeMargin={false}
