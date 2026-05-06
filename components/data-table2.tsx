@@ -17,8 +17,6 @@ import {
 import {
   IconChevronLeft,
   IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
   IconSearch,
   IconUser,
   IconShieldCheck,
@@ -324,11 +322,13 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
 export function DataTable2({
   data: initialData = [],
   onRefresh,
-  extraControls
+  extraControls,
+  isLoading
 }: {
   data: DataRow[];
   onRefresh?: () => void;
   extraControls?: React.ReactNode;
+  isLoading?: boolean;
 }) {
   const [data, setData] = React.useState<DataRow[]>(() => (Array.isArray(initialData) ? initialData : []))
   const { user: currentUser } = useUser()
@@ -428,30 +428,30 @@ export function DataTable2({
 
   return (
     <div className="w-full space-y-4">
-      {/* Search */}
-      <div className="flex items-center gap-3">
+      {/* Search and Controls */}
+      <div className="flex flex-col md:flex-row items-center gap-3">
         {extraControls}
-        <div className="relative w-full sm:w-60">
+        <div className="relative w-full sm:w-80">
           <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
             value={globalFilter ?? ""}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="pl-9 bg-card border-border h-10 rounded-lg text-sm"
+            className="pl-9 bg-muted/20 border-border/50 h-10 rounded-lg text-sm font-medium"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* Table Container */}
+      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/30">
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="border-b border-border hover:bg-transparent">
+              <TableRow key={hg.id} className="border-border/50 hover:bg-transparent">
                 {hg.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="text-xs font-semibold text-muted-foreground h-11 bg-muted/30"
+                    className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-4"
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
@@ -460,14 +460,23 @@ export function DataTable2({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <p className="text-sm font-medium">Loading users...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border hover:bg-muted/30 transition-colors cursor-default"
+                  className="hover:bg-muted/20 border-border/50 transition-colors cursor-default"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-3">
+                    <TableCell key={cell.id} className="py-4">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -475,10 +484,10 @@ export function DataTable2({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground">
+                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <IconSearch className="h-8 w-8 opacity-20" />
-                    <p>No users found</p>
+                    <p className="text-sm font-medium">No users found</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -487,19 +496,19 @@ export function DataTable2({
         </Table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between py-2 text-sm text-muted-foreground">
-        <span>
-          Showing {table.getFilteredRowModel().rows.length} of {data.length} users
-        </span>
-        <div className="flex items-center gap-4">
+      {/* Pagination UI - Matching TasksTable */}
+      <div className="flex items-center justify-between px-2 py-4 border-t border-border/10">
+        <div className="flex-1 text-xs text-muted-foreground font-medium">
+          Showing {table.getFilteredRowModel().rows.length} users
+        </div>
+        <div className="flex items-center gap-6 lg:gap-8">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">Rows per page</span>
+            <p className="text-xs font-bold text-muted-foreground">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(v) => table.setPageSize(Number(v))}
             >
-              <SelectTrigger className="h-8 w-[70px] bg-card border-border text-xs">
+              <SelectTrigger className="h-8 w-[70px] bg-transparent border-none font-bold text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">
@@ -509,21 +518,25 @@ export function DataTable2({
               </SelectContent>
             </Select>
           </div>
-          <span className="text-sm font-medium">
+          <div className="flex w-[100px] items-center justify-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
-          </span>
+          </div>
           <div className="flex items-center gap-1">
-            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-              <IconChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+            <Button 
+              variant="outline" 
+              className="h-8 w-8 p-0 border-border/50" 
+              onClick={() => table.previousPage()} 
+              disabled={!table.getCanPreviousPage()}
+            >
               <IconChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            <Button 
+              variant="outline" 
+              className="h-8 w-8 p-0 border-border/50" 
+              onClick={() => table.nextPage()} 
+              disabled={!table.getCanNextPage()}
+            >
               <IconChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" className="h-8 w-8 p-0 bg-card border-border" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
-              <IconChevronsRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

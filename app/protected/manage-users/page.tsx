@@ -12,27 +12,8 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { DataTable2 } from "@/components/data-table2";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useProfile } from "@/hooks/use-profile";
 
-const TableSkeleton = () => (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="grid grid-cols-5 gap-4 p-4 border-b border-border bg-muted/30">
-            {["w-16", "w-20", "w-20", "w-32", "w-16"].map((w, i) => (
-                <Skeleton key={i} className={`h-4 ${w}`} />
-            ))}
-        </div>
-        {[...Array(5)].map((_, i) => (
-            <div key={i} className="grid grid-cols-5 gap-4 p-4 items-center border-b border-border last:border-0">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-6 w-16 rounded-full" />
-            </div>
-        ))}
-    </div>
-);
 
 export default function ManageUsersPage() {
     const [roleFilter, setRoleFilter] = useState("all");
@@ -102,26 +83,23 @@ export default function ManageUsersPage() {
 
             {/* Table Area */}
             <div className="mt-2">
-                {isLoading ? (
-                    <TableSkeleton />
-                ) : (
-                    <DataTable2 
-                        data={roleFilter === "all" ? allUsers : roleFilter === "admin" ? admins : students} 
-                        onRefresh={fetchUsers}
-                        extraControls={
-                            <Select defaultValue="all" onValueChange={(v) => setRoleFilter(v)}>
-                                <SelectTrigger className="w-[180px] bg-card border-border h-10 rounded-lg">
-                                    <SelectValue placeholder="Filter by role" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Users</SelectItem>
-                                    <SelectItem value="student">Students</SelectItem>
-                                    <SelectItem value="admin">Admins</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        }
-                    />
-                )}
+                <DataTable2 
+                    data={roleFilter === "all" ? allUsers : roleFilter === "admin" ? admins : students} 
+                    onRefresh={fetchUsers}
+                    isLoading={isLoading}
+                    extraControls={
+                        <Select defaultValue="all" onValueChange={(v) => setRoleFilter(v)}>
+                            <SelectTrigger className="w-[180px] bg-muted/20 border-border/50 h-10 rounded-lg text-sm text-muted-foreground">
+                                <SelectValue placeholder="Filter by role" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card border-border">
+                                <SelectItem value="all">All Users</SelectItem>
+                                <SelectItem value="student">Students</SelectItem>
+                                <SelectItem value="admin">Admins</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    }
+                />
             </div>
         </div>
     );

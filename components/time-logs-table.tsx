@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useSearchParams } from "next/navigation"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -12,8 +13,14 @@ import {
     getSortedRowModel,
     useReactTable,
 } from "@tanstack/react-table"
-import { IconSearch, IconCalendar, IconChevronDown, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from "@tabler/icons-react"
-import { Badge } from "@/components/ui/badge"
+import {
+    IconSearch,
+    IconChevronLeft,
+    IconChevronRight,
+    IconPhoto,
+    IconClock,
+    IconExternalLink,
+} from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -31,201 +38,120 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { useLogs, type TimeLog } from "@/hooks/use-logs"
 import { format } from "date-fns"
-
-export type TimeLog = {
-    id: string
-    studentName: string
-    course: string
-    year: string
-    startTime: string
-    endTime: string
-    hours: string
-    status: "completed" | "in-progress"
-}
-
-const data: TimeLog[] = [
-    {
-        id: "1",
-        studentName: "Emma Myers",
-        course: "BSIT",
-        year: "1st yr",
-        startTime: "2026-02-14 08:30 AM",
-        endTime: "2026-03-17 08:30 AM",
-        hours: "72h",
-        status: "completed",
-    },
-    {
-        id: "2",
-        studentName: "Jenna Ortega",
-        course: "BSCS",
-        year: "2nd yr",
-        startTime: "2026-02-28 01:00 PM",
-        endTime: "2026-02-28 05:00 PM",
-        hours: "4h",
-        status: "completed",
-    },
-    {
-        id: "3",
-        studentName: "Gabimaru Hollow",
-        course: "BSIT",
-        year: "3rd yr",
-        startTime: "2024-03-16 09:00 AM",
-        endTime: "2024-03-16 01:00 PM",
-        hours: "4h",
-        status: "completed",
-    },
-    {
-        id: "4",
-        studentName: "Grant Gustin",
-        course: "BSIT",
-        year: "1st yr",
-        startTime: "2024-03-16 08:00 AM",
-        endTime: "2024-03-16 12:00 PM",
-        hours: "4h",
-        status: "completed",
-    },
-    {
-        id: "5",
-        studentName: "Linda Walker",
-        course: "BSCS",
-        year: "2nd yr",
-        startTime: "2024-03-17 08:30 AM",
-        endTime: "2024-03-17 11:30 AM",
-        hours: "3h",
-        status: "completed",
-    },
-    {
-        id: "6",
-        studentName: "Tina Tamashiro",
-        course: "BSIT",
-        year: "1st yr",
-        startTime: "2024-03-17 01:00 PM",
-        endTime: "-",
-        hours: "-",
-        status: "in-progress",
-    },
-    {
-        id: "7",
-        studentName: "Neil Dime",
-        course: "BSCS",
-        year: "3rd yr",
-        startTime: "2026-03-01 10:00 AM",
-        endTime: "2026-03-01 02:00 PM",
-        hours: "4h",
-        status: "completed",
-    },
-    {
-        id: "8",
-        studentName: "Iezhera Sajol",
-        course: "BSIT",
-        year: "2nd yr",
-        startTime: "2026-03-02 08:00 AM",
-        endTime: "-",
-        hours: "-",
-        status: "in-progress",
-    },
-    {
-        id: "9",
-        studentName: "Daniel Palle",
-        course: "BSIT",
-        year: "1st yr",
-        startTime: "2026-03-02 09:00 AM",
-        endTime: "2026-03-02 12:00 PM",
-        hours: "3h",
-        status: "completed",
-    },
-    {
-        id: "10",
-        studentName: "Car Lo",
-        course: "BSCS",
-        year: "4th yr",
-        startTime: "2026-03-02 01:00 PM",
-        endTime: "-",
-        hours: "-",
-        status: "in-progress",
-    },
-    { id: "11", studentName: "Sadie Sink", course: "BSIT", year: "2nd yr", startTime: "2026-03-03 08:00 AM", endTime: "2026-03-03 12:00 PM", hours: "4h", status: "completed" },
-    { id: "12", studentName: "Millie Bobby Brown", course: "BSCS", year: "3rd yr", startTime: "2026-03-03 09:00 AM", endTime: "-", hours: "-", status: "in-progress" },
-    { id: "13", studentName: "Finn Wolfhard", course: "BSIT", year: "1st yr", startTime: "2026-03-04 10:00 AM", endTime: "2026-03-04 02:00 PM", hours: "4h", status: "completed" },
-    { id: "14", studentName: "Tom Holland", course: "BSIT", year: "4th yr", startTime: "2026-03-04 01:00 PM", endTime: "-", hours: "-", status: "in-progress" },
-    { id: "15", studentName: "Zendaya Maree", course: "BSCS", year: "2nd yr", startTime: "2026-03-05 08:30 AM", endTime: "2026-03-05 11:30 AM", hours: "3h", status: "completed" },
-    { id: "16", studentName: "Chris Evans", course: "BSIT", year: "3rd yr", startTime: "2026-03-05 01:00 PM", endTime: "-", hours: "-", status: "in-progress" },
-    { id: "17", studentName: "Scarlett Johansson", course: "BSCS", year: "1st yr", startTime: "2026-03-06 09:00 AM", endTime: "2026-03-06 01:00 PM", hours: "4h", status: "completed" },
-    { id: "18", studentName: "Robert Downey Jr.", course: "BSIT", year: "2nd yr", startTime: "2026-03-06 02:00 PM", endTime: "-", hours: "-", status: "in-progress" },
-    { id: "19", studentName: "Chris Hemsworth", course: "BSCS", year: "4th yr", startTime: "2026-03-07 08:00 AM", endTime: "2026-03-07 12:00 PM", hours: "4h", status: "completed" },
-    { id: "20", studentName: "Mark Ruffalo", course: "BSIT", year: "3rd yr", startTime: "2026-03-07 01:00 PM", endTime: "-", hours: "-", status: "in-progress" },
-]
-
-export const columns: ColumnDef<TimeLog>[] = [
-    {
-        accessorKey: "id",
-        header: "ID",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("id")}</div>,
-    },
-    {
-        accessorKey: "studentName",
-        header: "Student Name",
-        cell: ({ row }) => <div className="font-medium">{row.getValue("studentName")}</div>,
-    },
-    {
-        accessorKey: "course",
-        header: "Course",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("course")}</div>,
-    },
-    {
-        accessorKey: "year",
-        header: "Year",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("year")}</div>,
-    },
-    {
-        accessorKey: "startTime",
-        header: "Start Time",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("startTime")}</div>,
-    },
-    {
-        accessorKey: "endTime",
-        header: "End Time",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("endTime")}</div>,
-    },
-    {
-        accessorKey: "hours",
-        header: "Hours",
-        cell: ({ row }) => <div className="text-muted-foreground">{row.getValue("hours")}</div>,
-    },
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => {
-            const status = row.getValue("status") as string
-            return (
-                <Badge
-                    className={`rounded-full px-3 py-0.5 font-medium ${status === "completed"
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-foreground text-background hover:bg-foreground/90 border-transparent"
-                        }`}
-                >
-                    {status}
-                </Badge>
-            )
-        },
-    },
-]
+import { Badge } from "./ui/badge"
 
 export function TimeLogsTable() {
-    const [date, setDate] = React.useState<Date>()
+    const searchParams = useSearchParams()
+    const taskId = searchParams.get("taskId") || undefined
+    const { logs, isLoading, error, refetch } = useLogs(taskId)
+
     const [sorting, setSorting] = React.useState<SortingState>([])
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [rowSelection, setRowSelection] = React.useState({})
+    const [selectedEvidences, setSelectedEvidences] = React.useState<string[] | null>(null)
+
+    const columns: ColumnDef<TimeLog>[] = [
+        {
+            accessorKey: "date",
+            header: "Date",
+            cell: ({ row }) => (
+                <div className="text-xs font-bold text-foreground">
+                    {row.original.date ? format(new Date(row.original.date), "yyyy-MM-dd") : "-"}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "studentName",
+            header: "Student",
+            cell: ({ row }) => {
+                const user = row.original.user
+                const name = user ? `${user.firstname} ${user.lastname}` : "Unknown Student"
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-foreground text-sm">{name}</span>
+                        <span className="text-[10px] text-muted-foreground">{user?.email || "-"}</span>
+                    </div>
+                )
+            },
+        },
+        {
+            accessorKey: "taskTitle",
+            header: "Task Name",
+            cell: ({ row }) => (
+                <div className="font-medium text-primary/90 text-sm">
+                    {row.original.task?.title || "Unknown Task"}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "start_time",
+            header: "Start",
+            cell: ({ row }) => <div className="text-xs text-muted-foreground">{row.getValue("start_time") || "-"}</div>,
+        },
+        {
+            accessorKey: "break_time",
+            header: "Break",
+            cell: ({ row }) => <div className="text-xs text-muted-foreground">{row.getValue("break_time") || "-"}</div>,
+        },
+        {
+            accessorKey: "back_time",
+            header: "Back",
+            cell: ({ row }) => <div className="text-xs text-muted-foreground">{row.getValue("back_time") || "-"}</div>,
+        },
+        {
+            accessorKey: "end_time",
+            header: "End",
+            cell: ({ row }) => <div className="text-xs text-muted-foreground">{row.getValue("end_time") || "-"}</div>,
+        },
+        {
+            accessorKey: "hours",
+            header: "Hours",
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1.5 font-bold text-primary">
+                    <IconClock className="h-3.5 w-3.5 opacity-50" />
+                    <span className="text-sm">{row.getValue("hours") || "0h"}</span>
+                </div>
+            ),
+        },
+        {
+            id: "evidence",
+            header: "Evidence",
+            cell: ({ row }) => {
+                const evidenceStr = row.original.evidence_urls
+                let urls: string[] = []
+                try {
+                    if (evidenceStr) urls = JSON.parse(evidenceStr)
+                } catch (e) {
+                    if (evidenceStr) urls = [evidenceStr]
+                }
+
+                return urls && urls.length > 0 ? (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-2 px-2 hover:bg-primary/10 hover:text-primary text-xs font-medium"
+                        onClick={() => setSelectedEvidences(urls)}
+                    >
+                        <IconPhoto className="h-4 w-4" />
+                        <span>{urls.length}</span>
+                    </Button>
+                ) : (
+                    <span className="text-[10px] text-muted-foreground italic px-2">No evidence</span>
+                )
+            }
+        },
+    ]
 
     const table = useReactTable({
-        data,
+        data: logs,
         columns,
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
@@ -242,64 +168,36 @@ export function TimeLogsTable() {
     })
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-4">
             {/* Table controls */}
-            <div className="flex items-center gap-4">
-                <div className="relative w-72">
+            <div className="flex flex-col md:flex-row items-center gap-3">
+                <div className="relative w-full md:w-80">
                     <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search student name..."
+                        placeholder="Search logs or students..."
                         value={(table.getColumn("studentName")?.getFilterValue() as string) ?? ""}
                         onChange={(event) =>
                             table.getColumn("studentName")?.setFilterValue(event.target.value)
                         }
-                        className="pl-9 bg-card border-border h-10 rounded-full"
+                        className="pl-9 bg-muted/20 border-border/50 h-10 rounded-lg text-sm font-medium"
                     />
                 </div>
-
-                <Popover>
-                    <PopoverTrigger asChild>
-                        <Button variant="outline" className="h-10 rounded-full bg-card border-border px-4 flex items-center gap-2 justify-start font-normal text-muted-foreground hover:bg-[#1a1d27] hover:text-white">
-                            <IconCalendar className="h-4 w-4" />
-                            {date ? format(date, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 border-border bg-card text-white">
-                        <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            initialFocus
-                        />
-                    </PopoverContent>
-                </Popover>
-
-                <Select
-                    value={(table.getColumn("status")?.getFilterValue() as string) ?? "all"}
-                    onValueChange={(value) =>
-                        table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)
-                    }
-                >
-                    <SelectTrigger className="h-10 w-[140px] rounded-full bg-card border-border text-muted-foreground focus:ring-0">
-                        <SelectValue placeholder="All status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border text-muted-foreground">
-                        <SelectItem value="all">All status</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="in-progress">In-progress</SelectItem>
-                    </SelectContent>
-                </Select>
+                {taskId && (
+                    <Badge variant="secondary" className="h-10 px-4 rounded-lg bg-primary/10 text-primary border-primary/20">
+                        Task: {logs[0]?.task?.title || taskId}
+                    </Badge>
+                )}
             </div>
 
             {/* Main Table */}
-            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
+            <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
                 <Table>
-                    <TableHeader className="bg-transparent hover:bg-transparent border-b border-border">
+                    <TableHeader className="bg-muted/30">
                         {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id} className="border-none hover:bg-transparent">
+                            <TableRow key={headerGroup.id} className="hover:bg-transparent border-border/50">
                                 {headerGroup.headers.map((header) => {
                                     return (
-                                        <TableHead key={header.id} className="text-xs font-semibold text-muted-foreground h-12">
+                                        <TableHead key={header.id} className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-4">
                                             {header.isPlaceholder
                                                 ? null
                                                 : flexRender(
@@ -313,12 +211,33 @@ export function TimeLogsTable() {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {error ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center text-destructive">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <p className="text-sm font-bold uppercase tracking-widest">Connection Error</p>
+                                        <p className="text-xs opacity-80 font-medium">Failed to reach the service engine. Please check if your backend is running.</p>
+                                        <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-2 h-8 text-[10px] font-bold uppercase border-destructive/20 hover:bg-destructive/10 text-destructive cursor-pointer">
+                                            Retry Connection
+                                        </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                                        <p className="text-sm font-medium">Loading time logs...</p>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
                             table.getRowModel().rows.map((row) => (
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    className="border-b-[#2c2d3c] hover:bg-white/5 transition-colors"
+                                    className="border-border/50 hover:bg-muted/20 transition-colors"
                                 >
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id} className="py-4">
@@ -329,85 +248,110 @@ export function TimeLogsTable() {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={columns.length} className="h-24 text-center">
-                                    No results.
+                                <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                                    No records found.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
+            </div>
 
-                {/* Table Footer / Pagination */}
-                <div className="flex items-center justify-between py-4 px-6 text-sm text-muted-foreground bg-card border-t border-border">
-                    <div>
-                        Showing {table.getFilteredRowModel().rows.length} of {data.length} logs
+            {/* Pagination UI */}
+            <div className="flex items-center justify-between px-2 py-4 border-t border-border/10">
+                <div className="flex-1 text-xs text-muted-foreground font-medium">
+                    Showing {table.getFilteredRowModel().rows.length} records
+                </div>
+                <div className="flex items-center gap-6 lg:gap-8">
+                    <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-muted-foreground">Rows per page</p>
+                        <Select
+                            value={`${table.getState().pagination.pageSize}`}
+                            onValueChange={(value) => {
+                                table.setPageSize(Number(value))
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px] bg-transparent border-none font-bold text-xs">
+                                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                                {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                                        {pageSize}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div className="flex items-center space-x-6 lg:space-x-8">
-                        <div className="flex items-center space-x-2">
-                            <p className="text-sm font-medium">Rows per page</p>
-                            <Select
-                                value={`${table.getState().pagination.pageSize}`}
-                                onValueChange={(value) => {
-                                    table.setPageSize(Number(value))
-                                }}
-                            >
-                                <SelectTrigger className="h-8 w-[70px] bg-card border-border">
-                                    <SelectValue placeholder={table.getState().pagination.pageSize} />
-                                </SelectTrigger>
-                                <SelectContent side="top" className="bg-card border-border text-muted-foreground">
-                                    {[10, 20, 30, 40, 50].map((pageSize) => (
-                                        <SelectItem key={pageSize} value={`${pageSize}`}>
-                                            {pageSize}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-                            Page {table.getState().pagination.pageIndex + 1} of{" "}
-                            {table.getPageCount()}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
-                                onClick={() => table.setPageIndex(0)}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <span className="sr-only">Go to first page</span>
-                                <IconChevronsLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="h-8 w-8 p-0 bg-card border-border"
-                                onClick={() => table.previousPage()}
-                                disabled={!table.getCanPreviousPage()}
-                            >
-                                <span className="sr-only">Go to previous page</span>
-                                <IconChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="h-8 w-8 p-0 bg-card border-border"
-                                onClick={() => table.nextPage()}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <span className="sr-only">Go to next page</span>
-                                <IconChevronRight className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                className="hidden h-8 w-8 p-0 lg:flex bg-card border-border"
-                                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                                disabled={!table.getCanNextPage()}
-                            >
-                                <span className="sr-only">Go to last page</span>
-                                <IconChevronsRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                    <div className="flex w-[100px] items-center justify-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        Page {table.getState().pagination.pageIndex + 1} of{" "}
+                        {table.getPageCount() || 1}
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0 border-border/50"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <IconChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0 border-border/50"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <IconChevronRight className="h-4 w-4" />
+                        </Button>
                     </div>
                 </div>
             </div>
+
+            {/* Evidence Modal */}
+            <Dialog open={!!selectedEvidences} onOpenChange={(open) => !open && setSelectedEvidences(null)}>
+                <DialogContent className="sm:max-w-[550px] p-0 overflow-hidden bg-card border border-border/50 shadow-2xl">
+                    <DialogHeader className="p-4 border-b border-border/50 bg-muted/30">
+                        <DialogTitle className="text-sm font-bold flex items-center gap-2">
+                            <IconPhoto className="h-4 w-4 text-primary" />
+                            Service Evidence ({selectedEvidences?.length})
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="p-4 space-y-4">
+                        <div className="flex gap-4 overflow-x-auto pb-4 px-2 snap-x snap-mandatory">
+                            {selectedEvidences?.map((url, idx) => (
+                                <div key={idx} className="relative min-w-[300px] aspect-[4/3] bg-muted rounded-xl overflow-hidden border border-border/50 group snap-center shadow-md">
+                                    <img
+                                        src={url}
+                                        alt={`Evidence ${idx + 1}`}
+                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
+                                            className="gap-2 h-9 rounded-full font-bold shadow-xl"
+                                            onClick={() => window.open(url, '_blank')}
+                                        >
+                                            <IconExternalLink className="h-4 w-4" />
+                                            Open Full View
+                                        </Button>
+                                    </div>
+                                    <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-md text-[10px] text-white px-2 py-1 rounded-full font-bold border border-white/10">
+                                        IMG_{idx + 1}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+                                Swipe or scroll horizontally to browse
+                            </p>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

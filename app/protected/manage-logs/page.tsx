@@ -1,6 +1,5 @@
-"use client"
-
 import * as React from "react"
+import { Suspense } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { TimeLogsTable } from "@/components/time-logs-table"
@@ -24,7 +23,13 @@ export default function LibraryPage() {
       <Separator className="border-t border-border opacity-50 block h-[1px] w-full" />
 
       {/* --- TABLE CONTENT --- */}
-      <TimeLogsTable />
+      <Suspense fallback={
+        <div className="h-32 w-full flex items-center justify-center">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        </div>
+      }>
+        <TimeLogsTable />
+      </Suspense>
 
     </div>
   )

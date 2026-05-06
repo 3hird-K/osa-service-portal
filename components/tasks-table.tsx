@@ -13,6 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { useRouter } from "next/navigation"
 import {
   IconDotsVertical,
   IconSearch,
@@ -32,6 +33,7 @@ import {
   IconX,
   IconMapPin,
   IconClock,
+  IconAlertCircle,
 } from "@tabler/icons-react"
 import { QRCodeCanvas } from "qrcode.react"
 import { toast } from "sonner"
@@ -93,7 +95,8 @@ import { IconCheck, IconSelector } from "@tabler/icons-react"
 
 
 export function TasksTable() {
-  const { data: tasks = [], isLoading: isTasksLoading } = useTasks()
+  const router = useRouter()
+  const { data: tasks = [], isLoading: isTasksLoading, error, refetch } = useTasks()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
@@ -243,6 +246,9 @@ export function TasksTable() {
             <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsQROpen(true); }}>
               <IconQrcode className="mr-2 h-4 w-4" /> View QR Code
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push(`/protected/manage-logs?taskId=${row.original.id}`)}>
+              <IconClipboardList className="mr-2 h-4 w-4" /> View Logs
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive">
               <IconTrash className="mr-2 h-4 w-4" /> Delete
@@ -293,50 +299,49 @@ export function TasksTable() {
   return (
     <div className="w-full space-y-4">
       {/* Filters and Tabs */}
-      <div className="flex flex-col gap-4">
-        <Tabs
-          defaultValue="active"
-          className="w-full"
-          onValueChange={(value) => {
-            if (value === "active") table.getColumn("status")?.setFilterValue(undefined)
-            else if (value === "progress") table.getColumn("status")?.setFilterValue("In Progress")
-            else if (value === "completed") table.getColumn("status")?.setFilterValue("Completed")
-          }}
-        >
-          <TabsList className="bg-muted/50 p-1">
-            <TabsTrigger value="active" className="text-xs font-bold px-4">All Task</TabsTrigger>
-            <TabsTrigger value="progress" className="text-xs font-bold px-4 gap-2">
-              In Progress
-              {tasks.filter(t => t.status === "In Progress").length > 0 && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
-                  {tasks.filter(t => t.status === "In Progress").length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="text-xs font-bold px-4">Completed</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+          <Tabs
+            defaultValue="active"
+            className="w-full sm:w-auto"
+            onValueChange={(value) => {
+              if (value === "active") table.getColumn("status")?.setFilterValue(undefined)
+              else if (value === "progress") table.getColumn("status")?.setFilterValue("In Progress")
+              else if (value === "completed") table.getColumn("status")?.setFilterValue("Completed")
+            }}
+          >
+            <TabsList className="bg-muted/50 p-1 h-10 rounded-xl">
+              <TabsTrigger value="active" className="text-xs font-bold px-4 h-full cursor-pointer rounded-lg">All Task</TabsTrigger>
+              <TabsTrigger value="progress" className="text-xs font-bold px-4 h-full gap-2 cursor-pointer rounded-lg">
+                In Progress
+                {tasks.filter(t => t.status === "In Progress").length > 0 && (
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                    {tasks.filter(t => t.status === "In Progress").length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs font-bold px-4 h-full cursor-pointer rounded-lg">Completed</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-1 items-center gap-2 w-full max-w-2xl">
-            <div className="relative flex-1">
-              <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search all columns..."
-                value={globalFilter ?? ""}
-                onChange={(event) => setGlobalFilter(event.target.value)}
-                className="pl-9 h-10 bg-muted/20 border-border/50"
-              />
-            </div>
+          <div className="relative w-full sm:w-72">
+            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search all columns..."
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="pl-9 h-10 bg-muted/20 border-border/50"
+            />
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setIsAddOpen(true)} className="gap-2">
-              <IconPlus className="h-4 w-4" /> Create Task
-            </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <Button onClick={() => setIsAddOpen(true)} className="gap-2 cursor-pointer">
+            <IconPlus className="h-4 w-4" /> Create Task
+          </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 cursor-pointer">
                   <IconLayoutColumns className="h-4 w-4" /> Columns
                 </Button>
               </DropdownMenuTrigger>
@@ -359,8 +364,7 @@ export function TasksTable() {
                     )
                   })}
               </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -384,7 +388,40 @@ export function TasksTable() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {error ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-48 text-center text-destructive">
+                  <div className="flex flex-col items-center justify-center gap-3">
+                    <div className="p-3 bg-destructive/10 rounded-full">
+                      <IconAlertCircle className="h-6 w-6 text-destructive" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold uppercase tracking-widest">Connection Error</p>
+                      <p className="text-xs opacity-80 font-medium max-w-[250px] mx-auto">
+                        Failed to reach the task service engine. Please ensure your backend is running.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => refetch()} 
+                      className="mt-2 h-9 text-[10px] font-bold uppercase border-destructive/20 hover:bg-destructive/10 text-destructive cursor-pointer px-6 rounded-full"
+                    >
+                      Retry Connection
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : isTasksLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center gap-2">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                    <p className="text-sm font-medium">Loading tasks..</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
@@ -401,7 +438,7 @@ export function TasksTable() {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  No results found.
                 </TableCell>
               </TableRow>
             )}

@@ -21,7 +21,7 @@ export interface Task {
   updated_at: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://server-osa-service.onrender.com';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Fetch all tasks
 export function useTasks() {
