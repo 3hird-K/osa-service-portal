@@ -518,6 +518,7 @@ export function TasksTable() {
                   description: selectedTask?.description,
                   location: selectedTask?.location,
                   hours: selectedTask?.hours,
+                  status: selectedTask?.status,
                   assignee_id: selectedTask?.assigned_to || selectedTask?.assignee?.id
                 })}
                 size={220}
