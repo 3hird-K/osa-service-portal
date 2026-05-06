@@ -7,7 +7,7 @@ import {
   IconClock,
   IconSettings,
   IconHelpCircle,
-  IconDeviceLaptop
+  IconClipboardList
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -34,7 +34,7 @@ const staticData = {
   documents: [
     { name: "Dashboard", url: "/protected", icon: IconLayoutDashboard },
     { name: "Manage Users", url: "/protected/manage-users", icon: IconUsersGroup },
-    { name: "Manage Devices", url: "/protected/manage-devices", icon: IconDeviceLaptop },
+    { name: "Manage Tasks", url: "/protected/manage-tasks", icon: IconClipboardList },
     { name: "Time logs", url: "/protected/manage-logs", icon: IconClock },
   ],
 };

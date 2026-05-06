@@ -6,6 +6,7 @@ export interface User {
   id: string;
   firstname: string | null;
   lastname: string | null;
+  email: string | null;
   account_type: string | null;
   avatar_url: string | null;
   updated_at: string;
@@ -20,19 +21,18 @@ export function useUsers() {
       const response = await fetch(`${apiUrl}/profiles`, {
         cache: 'no-store',
       });
-      console.log("Fetched users:", response);
+      console.log("useUsers - Response Status:", response.status);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log("useUsers - Data Received:", data);
 
       // Ensure it returns [] if data is null
       return Array.isArray(data) ? data : [];
     },
-    // Provide initial empty array for the first render
-    initialData: [],
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
