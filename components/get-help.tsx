@@ -15,6 +15,7 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { useUser } from "@clerk/nextjs";
 
 const faqItems = [
   {
@@ -22,49 +23,49 @@ const faqItems = [
     questions: [
       {
         q: "How do I reset my password?",
-        a: 'Go to Settings > Account Security and click "Change password." A password reset link will be sent to your registered email. You can also use the "Forgot Password" option on the login page.',
-      },
-      {
-        q: "How do I change my account email?",
-        a: "For security purposes, email changes require administrator approval. Please contact our support team via the Contact Information tab or submit a support ticket.",
+        a: 'Go to Settings > Security and click "Change password." You can also use the "Forgot Password" option on the login page.',
       },
       {
         q: "What are the different account types?",
-        a: 'The portal supports three account types: Admin (full system access and user management), Staff (manage books, devices, and logs), and User (browse and manage personal content). Your account type is shown in Settings > Profile.',
+        a: 'The portal supports three account types: Admin (full system access), Staff (manage tasks and logs), and Student (browse tasks and log hours via mobile).',
       },
       {
-        q: "I can't log in to my account. What should I do?",
-        a: 'First, try resetting your password. If the issue persists, clear your browser cache and cookies. If you still cannot log in, contact support — your account may be locked or deactivated.',
-      },
-    ],
-  },
-  {
-    category: "Devices & Logs",
-    questions: [
-      {
-        q: "How do I register a new device?",
-        a: 'Go to Manage Devices and click "Add Device." Enter the device information including name, type, and serial number. The device will appear in your device list after saving.',
-      },
-      {
-        q: "Where can I view time logs?",
-        a: "Time logs are available under the Time Logs section in the sidebar. You can filter logs by date range, user, and device. Admins and Staff can view all user logs.",
-      },
-      {
-        q: "How do I export my logs?",
-        a: 'On the Time Logs page, use the export button in the top toolbar to download your logs as a CSV file. You can filter the data before exporting to get only the records you need.',
+        q: "Where is my Unique User ID?",
+        a: "Your unique identifier is located in Settings > Profile. This ID is used to link your mobile app sessions to your portal account.",
       },
     ],
   },
   {
-    category: "Security",
+    category: "Tasks & Time Tracking",
     questions: [
       {
-        q: "How do I enable two-factor authentication (2FA)?",
-        a: "Go to Settings > Account Security and toggle on the Google Authenticator (2FA) switch. Follow the on-screen instructions to link your authenticator app.",
+        q: "How do I log hours for a task?",
+        a: "Hours are primarily logged via the OSA Mobile App. Simply scan the Task QR code generated in the portal to start a work session.",
       },
       {
-        q: "How can I see which devices are logged into my account?",
-        a: "Visit Settings > Account Security and scroll to the Devices and Activities section. You'll see all active sessions. You can revoke access to any unrecognized device.",
+        q: "When does a task mark as 'Completed'?",
+        a: "Tasks use an automated completion logic. Once your 'Logged Hours' meet or exceed the 'Required Hours' set for the task, the status transitions to Completed automatically.",
+      },
+      {
+        q: "How do I upload proof of work?",
+        a: "When ending a work session on the mobile app, you may be prompted to take a photo as proof. This is then visible to Admins in the Time Logs section.",
+      },
+      {
+        q: "Can I take breaks during a session?",
+        a: "Yes, but sessions are limited to one break only to ensure accurate timekeeping. Ending a break resumes the timer immediately.",
+      },
+    ],
+  },
+  {
+    category: "Portal & Mobile Sync",
+    questions: [
+      {
+        q: "How do I sync my mobile app with the portal?",
+        a: "Ensure you are logged in with the same credentials on both platforms. Your tasks and logs will synchronize in real-time across the system.",
+      },
+      {
+        q: "Where can I find the Task QR codes?",
+        a: "Admins can view and print QR codes by clicking on a task in the 'Manage Tasks' table. These codes are scanned by the mobile app to initiate logs.",
       },
     ],
   },
@@ -73,78 +74,74 @@ const faqItems = [
 const userGuides = [
   {
     icon: IconBook,
-    title: "Getting Started",
-    description: "Learn the basics of navigating the OSA Service Portal.",
+    title: "Portal Basics",
+    description: "Navigate the administrative workspace.",
     steps: [
-      "Log in with your credentials at the login page.",
-      "You will be redirected to the Dashboard, which shows an overview of your activity.",
-      "Use the sidebar to navigate between sections: Dashboard, Manage Users, Manage Devices, Time Logs, Settings, and Get Help.",
-      "Customize your profile in Settings > Profile.",
+      "Log in with your OSA credentials.",
+      "The Dashboard provides a bird's-eye view of active tasks and recent logs.",
+      "Use the sidebar to manage Users, Tasks, and Timelogs.",
+      "Access your personal preferences in the Settings menu.",
     ],
   },
   {
     icon: IconUsers,
     title: "Managing Users",
-    description: "Admin guide to adding, editing, and managing user accounts.",
+    description: "How to handle account roles and permissions.",
     steps: [
-      'Navigate to "Manage Users" from the sidebar.',
-      "View all registered users in the table with their name, email, role, and status.",
-      'Click on a user row to view or edit their profile details.',
-      'Use the "Edit" button to update a user\'s name, role, or status.',
-      "Only Admin and Staff roles can perform user management actions.",
+      'Navigate to "Manage Users" to see the full registry.',
+      "Admins can promote users to Staff or keep them as Students.",
+      "View detailed profile metrics and system IDs for each user.",
+      "Monitor account status and enrollment dates in real-time.",
     ],
   },
   {
     icon: IconDevices,
-    title: "Managing Devices",
-    description: "How to register, monitor, and manage devices in the portal.",
+    title: "Task Management",
+    description: "Creating and monitoring student assignments.",
     steps: [
-      'Navigate to "Manage Devices" from the sidebar.',
-      'Click "Add Device" to register a new device with its name, type, and serial number.',
-      "View all devices in the table with real-time status indicators.",
-      "Click a device to view its details or edit its information.",
-      "Remove inactive devices by selecting them and clicking delete.",
+      'Go to "Manage Tasks" to create a new operational entry.',
+      "Set the 'Required Hours' for the task and assign a primary owner.",
+      "Open the task details to generate and print the unique QR code.",
+      "The task status will stay 'Pending' until work begins via the mobile app.",
     ],
   },
   {
     icon: IconClock,
-    title: "Time Logs",
-    description: "Track and manage time-based logs for users and devices.",
+    title: "Mobile Time Tracking",
+    description: "How students log hours using the mobile app.",
     steps: [
-      'Navigate to "Time Logs" from the sidebar.',
-      "View all time log entries in a sortable and filterable table.",
-      "Use the date picker to filter logs by a specific date range.",
-      "Export filtered data to CSV using the export button.",
-      "Admins and Staff can view logs for all users; regular users see only their own.",
+      "Open the OSA Mobile App and navigate to the Scan tab.",
+      "Point the camera at a printed Task QR code to start the timer.",
+      "Take a break if needed (limited to one per session).",
+      "End the session by capturing a photo proof of the completed work.",
     ],
   },
   {
     icon: IconSettings,
-    title: "Settings & Preferences",
-    description: "Configure your profile, security, and notification preferences.",
+    title: "Automated Completion",
+    description: "Understanding the system's logic.",
     steps: [
-      'Go to "Settings" from the sidebar.',
-      "In the Profile tab, update your name and avatar.",
-      "In Account Security, manage your password, 2FA, and active sessions.",
-      "In Notifications, toggle which alerts you want to receive.",
-      "Click the save button after making changes on each tab.",
+      "The portal monitors every second logged by students.",
+      "When Logged Hours >= Required Hours, the system triggers 'Auto-Complete'.",
+      "Admins receive notifications once a task reaches 100% completion.",
+      "All logs are immutable once a task is marked as Completed.",
     ],
   },
   {
     icon: IconShieldLock,
-    title: "Security Best Practices",
-    description: "Keep your account safe with these security tips.",
+    title: "Security Protocols",
+    description: "Keeping your operational data secure.",
     steps: [
-      "Use a strong, unique password with at least 12 characters.",
-      "Enable two-factor authentication (2FA) in Security Settings.",
-      "Review your active sessions regularly and remove unrecognized devices.",
-      "Turn on Login Alerts to be notified of new sign-ins.",
-      "Never share your login credentials with anyone.",
+      "Change your password regularly in the Security tab.",
+      "Monitor active device sessions to prevent unauthorized access.",
+      "Use the 'Delete Account' option in the Danger Zone for permanent removal.",
+      "Ensure all mobile sessions include valid photo proof for auditing.",
     ],
   },
 ];
 
 export function GetHelp() {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState("contact");
   const [openFaq, setOpenFaq] = useState<string | null>(null);
   const [expandedGuide, setExpandedGuide] = useState<number | null>(null);
@@ -155,17 +152,47 @@ export function GetHelp() {
   const [ticketMessage, setTicketMessage] = useState("");
   const [ticketCategory, setTicketCategory] = useState("general");
   const [showTicketForm, setShowTicketForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmitTicket = () => {
+  const handleSubmitTicket = async () => {
     if (!ticketSubject.trim() || !ticketMessage.trim()) {
       toast.error("Please fill in both subject and message");
       return;
     }
-    toast.success("Support ticket submitted successfully! We'll get back to you within 24 hours.");
-    setTicketSubject("");
-    setTicketMessage("");
-    setTicketCategory("general");
-    setShowTicketForm(false);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          category: ticketCategory,
+          subject: ticketSubject,
+          message: ticketMessage,
+          userEmail: user?.primaryEmailAddress?.emailAddress,
+          userName: user?.fullName || user?.username,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send ticket");
+      }
+
+      toast.success("Support ticket submitted successfully! We'll get back to you within 24 hours.");
+      setTicketSubject("");
+      setTicketMessage("");
+      setTicketCategory("general");
+      setShowTicketForm(false);
+    } catch (error: any) {
+      console.error("Support ticket error:", error);
+      toast.error(error.message || "Failed to send ticket. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filteredFaq = faqItems
@@ -312,9 +339,10 @@ export function GetHelp() {
                         <div className="flex justify-end">
                           <button
                             onClick={handleSubmitTicket}
-                            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 text-sm font-medium transition-colors"
+                            disabled={isSubmitting}
+                            className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 text-sm font-medium transition-colors disabled:opacity-50"
                           >
-                            Submit Ticket
+                            {isSubmitting ? "Sending..." : "Submit Ticket"}
                           </button>
                         </div>
                       </div>

@@ -594,7 +594,7 @@ export function TasksTable() {
             </div>
 
             <div className="flex flex-col items-center gap-1">
-                <Badge variant="outline" className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-muted/50 border-border/50">
+                <Badge variant="outline" className="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-tight bg-muted/50 border-border/50">
                     ID: {selectedTask?.id}
                 </Badge>
                 <p className="text-[11px] text-muted-foreground font-medium mt-2">Scan with the mobile app to verify attendance</p>

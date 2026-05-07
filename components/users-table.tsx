@@ -128,8 +128,8 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
                     <div className="p-1.5 rounded-lg bg-muted/50 border border-border/30">
                         <IconId className="h-3 w-3 text-muted-foreground" />
                     </div>
-                    <span className="font-mono text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
-                        {String(row.original.id).slice(0, 8)}
+                    <span className="font-mono text-xs font-bold text-muted-foreground uppercase whitespace-nowrap">
+                        {String(row.original.id)}
                     </span>
                 </div>
             ),
