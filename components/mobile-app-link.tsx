@@ -42,7 +42,7 @@ const mobileFeatures = [
 ];
 
 export function MobileAppLink() {
-  const downloadUrl = "https://www.dropbox.com/scl/fi/6qb72roidbrc7jbh753ns/may8update.apk?rlkey=lbq140p0n8guu5dz6uo4ud9lr&st=5c3xn82k&dl=1";
+  const downloadUrl = "https://www.dropbox.com/scl/fi/2rs58maffh1crs4a5muj5/osaservice-ustp.apk?rlkey=d67hkxo1paw2nr5q4yda5moz1&st=x9m81bde&dl=1";
 
   return (
     <section className="w-full max-w-5xl mx-auto my-8 px-4 sm:px-12">
