@@ -1,12 +1,26 @@
+"use client";
+
 import Image from "next/image";
 import UstpLogo from "@/assets/ustp.png";
+import { Search, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "./ui/button";
 
 export function Hero() {
+  const [taskId, setTaskId] = useState("");
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (taskId.trim()) {
+      router.push(`/track?id=${taskId.trim()}`);
+    }
+  };
+
   return (
-    // Increased top padding (pt-20) to give the logo room below the navbar
     <section className="flex flex-col items-center justify-center text-center gap-8 px-6 pt-20 pb-12 sm:gap-10 sm:py-32">
       
-      {/* Logo: Slightly larger on mobile for better brand presence */}
       <a
         href="https://www.ustp.edu.ph/"
         target="_blank"
@@ -23,14 +37,11 @@ export function Hero() {
         />
       </a>
 
-      {/* Title Container */}
       <div className="flex w-full max-w-4xl flex-col items-center space-y-6">
-        {/* Title: Using a more aggressive scale for mobile impact */}
         <h1 className="text-4xl font-extrabold tracking-tighter text-foreground sm:text-6xl md:text-7xl lg:text-8xl">
           OSA Service Portal
         </h1>
         
-        {/* Main description: Fixed sm:text-xs (which was making it too small) */}
         <p className="max-w-md text-base leading-relaxed text-muted-foreground sm:max-w-xl sm:text-lg md:text-xl">
           Streamline your{" "}
           <span className="font-semibold text-primary">community service,</span>{" "}
@@ -40,16 +51,37 @@ export function Hero() {
           all in one unified dashboard.
         </p>
 
-        {/* Secondary text: Kept subtle but readable */}
-        <p className="max-w-sm text-[13px] leading-relaxed text-muted-foreground/60 sm:max-w-2xl sm:text-base">
-          The official administrative hub for USTP's QR-based service tracking,
-          providing secure, tamper-proof logs and automated hour calculations.
-        </p>
+        {/* Tracking Search Interface */}
+        <div className="w-full max-w-md pt-4">
+          <form 
+            onSubmit={handleSearch}
+            className="group relative flex items-center p-1.5 bg-muted/40 border border-border/50 rounded-full focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5 transition-all duration-300"
+          >
+            <div className="pl-4 pr-2 text-muted-foreground group-focus-within:text-primary transition-colors">
+              <Search size={20} />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Enter Task ID to track..." 
+              value={taskId}
+              onChange={(e) => setTaskId(e.target.value)}
+              className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder:text-muted-foreground/60 h-10"
+            />
+            <Button 
+              type="submit" 
+              size="sm" 
+              className="rounded-full px-4 h-10 font-bold tracking-tight shadow-lg shadow-primary/20"
+            >
+              Track <ArrowRight size={16} className="ml-2" />
+            </Button>
+          </form>
+          <p className="mt-4 text-[11px] font-bold text-muted-foreground uppercase tracking-[0.2em] opacity-40">
+            QR verification deep-linking enabled
+          </p>
+        </div>
       </div>
 
-      {/* Gradient Divider: More vibrant to separate from the Team section */}
-      <div className="mt-4 h-px w-full max-w-[100px] bg-gradient-to-r from-transparent via-primary/50 to-transparent sm:max-w-md" />
-      
+      <div className="mt-8 h-px w-full max-w-[100px] bg-gradient-to-r from-transparent via-primary/50 to-transparent sm:max-w-md" />
     </section>
   );
-}
+}
