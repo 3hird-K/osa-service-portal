@@ -14,6 +14,7 @@ export interface Task {
     firstname: string | null;
     lastname: string | null;
     email: string | null;
+    avatar_url: string | null;
   } | null;
   location?: string;
   hours?: string;

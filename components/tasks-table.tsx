@@ -34,6 +34,11 @@ import {
   IconMapPin,
   IconClock,
   IconAlertCircle,
+  IconActivity,
+  IconUser,
+  IconLoader2,
+  IconCheck,
+  IconSelector,
 } from "@tabler/icons-react"
 import { QRCodeCanvas } from "qrcode.react"
 import { toast } from "sonner"
@@ -91,8 +96,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useUsers } from "@/hooks/use-users"
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, type Task } from "@/hooks/use-tasks"
-import { IconCheck, IconSelector } from "@tabler/icons-react"
 import { useProfile } from "@/hooks/use-profile"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 
 export function TasksTable() {
@@ -105,7 +110,7 @@ export function TasksTable() {
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'title', desc: false }])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
@@ -116,19 +121,15 @@ export function TasksTable() {
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false)
   const [isQROpen, setIsQROpen] = React.useState(false)
   const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
-  const { data: users = [], isLoading, isError } = useUsers()
+  const { data: users = [], isLoading } = useUsers()
 
   React.useEffect(() => {
-    // Hide selection column if not admin
     setColumnVisibility(prev => ({
       ...prev,
       select: isAdmin
     }))
   }, [isAdmin])
 
-  React.useEffect(() => {
-    console.log("TasksTable - Users state:", { users, isLoading, isError })
-  }, [users, isLoading, isError])
   const [assigneeSearch, setAssigneeSearch] = React.useState("")
   const [isAssigneePopoverOpen, setIsAssigneePopoverOpen] = React.useState(false)
   const [selectedAssigneeId, setSelectedAssigneeId] = React.useState<string | null>(null)
@@ -140,13 +141,19 @@ export function TasksTable() {
     const lastName = user.lastname ?? ""
     const fullName = `${firstName} ${lastName}`.toLowerCase()
     const email = user.email?.toLowerCase() ?? ""
-
     return (
       fullName.includes(search) ||
       email.includes(search) ||
       user.id.toLowerCase().includes(search)
     )
   })
+
+  const stats = React.useMemo(() => ({
+    total: tasks.length,
+    inProgress: tasks.filter(t => t.status === "In Progress").length,
+    completed: tasks.filter(t => t.status === "Completed").length,
+    maintenance: tasks.filter(t => t.status === "Maintenance").length
+  }), [tasks])
 
   const columns: ColumnDef<Task>[] = [
     {
@@ -156,6 +163,7 @@ export function TasksTable() {
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
+          className="translate-y-[2px] border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
       ),
       cell: ({ row }) => (
@@ -163,112 +171,137 @@ export function TasksTable() {
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          className="translate-y-[2px] border-muted-foreground/30 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
         />
       ),
       enableSorting: false,
       enableHiding: false,
     },
     {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => <div className="font-mono text-[11px] font-bold text-muted-foreground">{row.getValue("id")}</div>,
-    },
-    {
       accessorKey: "title",
-      header: "Task Title",
+      header: "Task Definition",
       cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-semibold text-foreground">{row.getValue("title")}</span>
-          <span className="text-xs text-muted-foreground line-clamp-1">{row.original.description}</span>
+        <div className="flex flex-col min-w-[200px]">
+          <span className="font-bold text-foreground text-sm leading-tight group-hover:text-primary transition-colors cursor-default">
+            {row.getValue("title")}
+          </span>
+          <span className="text-[10px] text-muted-foreground font-medium line-clamp-1 mt-0.5 uppercase tracking-wider">
+            {row.original.description || "No specific brief provided"}
+          </span>
         </div>
       ),
     },
     {
       accessorKey: "status",
-      header: "Status",
+      header: "Current State",
       cell: ({ row }) => {
         const status = row.getValue("status") as string
+        const isCompleted = status === "Completed"
+        const isInProgress = status === "In Progress"
+        const isMaintenance = status === "Maintenance"
+        
         return (
-          <Badge variant={
-            status === "Completed" ? "default" :
-              status === "In Progress" ? "secondary" :
-                status === "Maintenance" ? "destructive" : "outline"
-          } className="font-bold text-[10px] uppercase tracking-wider">
+          <Badge 
+            variant="outline" 
+            className={`gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+              isCompleted ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-sm shadow-emerald-500/5" :
+              isInProgress ? "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-sm shadow-blue-500/5" :
+              isMaintenance ? "bg-destructive/10 text-destructive border-destructive/20" :
+              "bg-muted/50 text-muted-foreground border-border/50"
+            }`}
+          >
+            <div className={`h-1.5 w-1.5 rounded-full ${
+              isCompleted ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
+              isInProgress ? "bg-blue-500 animate-pulse" :
+              isMaintenance ? "bg-destructive" : "bg-muted-foreground"
+            }`} />
             {status}
           </Badge>
         )
       },
     },
     {
-      accessorKey: "assigned_to",
-      header: "Assigned To",
+      id: "assignee",
+      header: "Personnel",
       cell: ({ row }) => {
         const assignee = row.original.assignee
-        if (!assignee) return <div className="text-muted-foreground">-</div>
+        if (!assignee) return (
+            <div className="flex items-center gap-2 opacity-40">
+                <div className="h-8 w-8 rounded-full bg-muted border border-dashed border-border flex items-center justify-center">
+                    <IconUser className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Unassigned</span>
+            </div>
+        )
         const name = `${assignee.firstname ?? ""} ${assignee.lastname ?? ""}`.trim()
+        const initials = `${assignee.firstname?.[0] || ""}${assignee.lastname?.[0] || ""}`
+        
         return (
-          <div className="flex flex-col">
-            <span className="font-medium">{name || "Unknown"}</span>
-            <span className="text-[10px] text-muted-foreground">{assignee.email}</span>
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-8 w-8 rounded-full border border-border/50 shadow-sm transition-transform group-hover:scale-105 overflow-hidden">
+                <AvatarImage src={assignee.avatar_url || ""} />
+                <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-black uppercase">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col min-w-0">
+                <span className="font-bold text-foreground text-xs leading-tight truncate">{name}</span>
+                <span className="text-[9px] text-muted-foreground font-medium truncate">{assignee.email}</span>
+            </div>
           </div>
         )
       },
     },
     {
       accessorKey: "location",
-      header: "Location",
+      header: "Deployment",
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-          <IconMapPin className="h-3.5 w-3.5" />
-          <span>{row.getValue("location") || "-"}</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="p-1.5 rounded-lg bg-muted/50 border border-border/30">
+            <IconMapPin className="h-3 w-3" />
+          </div>
+          <span className="text-xs font-bold tracking-tight">{row.getValue("location") || "Field Office"}</span>
         </div>
       ),
     },
     {
       accessorKey: "hours",
-      header: "Hours",
+      header: "Requirement",
       cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-          <IconClock className="h-3.5 w-3.5" />
-          <span>{row.getValue("hours") ? `${row.getValue("hours")}h` : "-"}</span>
+        <div className="flex items-center gap-2">
+            <Badge variant="outline" className="h-7 px-3 rounded-lg border-amber-500/20 bg-amber-500/5 text-amber-500 gap-1.5">
+                <IconClock className="h-3 w-3" />
+                <span className="text-[10px] font-black">{row.getValue("hours") || "0"}h</span>
+            </Badge>
         </div>
       ),
     },
     {
-      accessorKey: "created_at",
-      header: "Created",
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("created_at"))
-        return <div className="text-muted-foreground text-sm">{date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })}</div>
-      },
-    },
-    {
       id: "actions",
+      header: "Admin",
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0 rounded-full hover:bg-muted transition-colors">
               <IconDotsVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[160px]">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-[180px] rounded-xl border-border/40 shadow-2xl">
+            <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 px-3 py-2">Operations</DropdownMenuLabel>
             {isAdmin && (
-              <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsEditOpen(true); }}>
-                <IconEdit className="mr-2 h-4 w-4" /> Edit Record
+              <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsEditOpen(true); }} className="rounded-lg m-1 font-bold text-xs gap-2">
+                <IconEdit className="h-4 w-4 text-blue-500" /> Edit Record
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsQROpen(true); }}>
-              <IconQrcode className="mr-2 h-4 w-4" /> View QR Code
+            <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsQROpen(true); }} className="rounded-lg m-1 font-bold text-xs gap-2">
+              <IconQrcode className="h-4 w-4 text-emerald-500" /> View QR Scan
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/protected/manage-logs?taskId=${row.original.id}`)}>
-              <IconClipboardList className="mr-2 h-4 w-4" /> View Logs
+            <DropdownMenuItem onClick={() => router.push(`/protected/manage-logs?taskId=${row.original.id}`)} className="rounded-lg m-1 font-bold text-xs gap-2">
+              <IconClipboardList className="h-4 w-4 text-primary" /> Audit Logs
             </DropdownMenuItem>
             {isAdmin && row.original.status?.toLowerCase() !== "completed" && (
               <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive font-bold">
-                  <IconTrash className="mr-2 h-4 w-4" /> Delete Record
+                <DropdownMenuSeparator className="bg-border/40" />
+                <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="rounded-lg m-1 font-bold text-xs gap-2 text-destructive hover:bg-destructive/10 transition-colors">
+                  <IconTrash className="h-4 w-4" /> Purge Task
                 </DropdownMenuItem>
               </>
             )}
@@ -302,253 +335,248 @@ export function TasksTable() {
   const downloadQRCode = () => {
     const canvas = document.getElementById("task-qr-code") as HTMLCanvasElement
     if (canvas) {
-      const pngUrl = canvas
-        .toDataURL("image/png")
-        .replace("image/png", "image/octet-stream")
+      const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream")
       const downloadLink = document.createElement("a")
       downloadLink.href = pngUrl
-      downloadLink.download = `task-${selectedTask?.id}.png`
+      downloadLink.download = `task-qr-${selectedTask?.id}.png`
       document.body.appendChild(downloadLink)
       downloadLink.click()
       document.body.removeChild(downloadLink)
-      toast.success("QR Code downloaded")
+      toast.success("Identity QR downloaded")
     }
   }
 
   return (
-    <div className="w-full space-y-4">
-      {/* Filters and Tabs */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <Tabs
-            defaultValue="active"
-            className="w-full sm:w-auto"
-            onValueChange={(value) => {
-              if (value === "active") table.getColumn("status")?.setFilterValue(undefined)
-              else if (value === "progress") table.getColumn("status")?.setFilterValue("In Progress")
-              else if (value === "completed") table.getColumn("status")?.setFilterValue("Completed")
-            }}
-          >
-            <TabsList className="bg-muted/50 p-1 h-10 rounded-xl">
-              <TabsTrigger value="active" className="text-xs font-bold px-4 h-full cursor-pointer rounded-lg">All Task</TabsTrigger>
-              <TabsTrigger value="progress" className="text-xs font-bold px-4 h-full gap-2 cursor-pointer rounded-lg">
-                In Progress
-                {tasks.filter(t => t.status === "In Progress").length > 0 && (
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
-                    {tasks.filter(t => t.status === "In Progress").length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs font-bold px-4 h-full cursor-pointer rounded-lg">Completed</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="relative w-full sm:w-72">
-            <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search all columns..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="pl-9 h-10 bg-muted/20 border-border/50"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          {isAdmin && (
-            <Button onClick={() => setIsAddOpen(true)} className="gap-2 cursor-pointer">
-              <IconPlus className="h-4 w-4" /> Create Task
-            </Button>
-          )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2 cursor-pointer">
-                <IconLayoutColumns className="h-4 w-4" /> Columns
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+    <div className="w-full space-y-8">
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+              { label: "Active Pipeline", value: stats.total, icon: IconClipboardList, color: "text-primary" },
+              { label: "Field Operations", value: stats.inProgress, icon: IconActivity, color: "text-blue-500" },
+              { label: "Completed Units", value: stats.completed, icon: IconCheck, color: "text-emerald-500" },
+              { label: "System Alerts", value: stats.maintenance, icon: IconAlertCircle, color: "text-destructive" },
+          ].map((stat, i) => (
+              <div key={i} className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 transition-all hover:shadow-xl hover:shadow-primary/5">
+                  <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform ${stat.color}`}>
+                      <stat.icon className="h-12 w-12" />
+                  </div>
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">{stat.label}</p>
+                  <p className="text-2xl font-black tracking-tight">{stat.value}</p>
+              </div>
+          ))}
       </div>
 
-      {/* Table Content */}
-      <div className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-muted/30">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="hover:bg-transparent border-border/50">
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="text-muted-foreground font-bold text-[11px] uppercase tracking-wider py-4">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {error ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-48 text-center text-destructive">
-                  <div className="flex flex-col items-center justify-center gap-3">
-                    <div className="p-3 bg-destructive/10 rounded-full">
-                      <IconAlertCircle className="h-6 w-6 text-destructive" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm font-bold uppercase tracking-widest">Connection Error</p>
-                      <p className="text-xs opacity-80 font-medium max-w-[250px] mx-auto">
-                        Failed to reach the task service engine. Please ensure your backend is running.
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => refetch()}
-                      className="mt-2 h-9 text-[10px] font-bold uppercase border-destructive/20 hover:bg-destructive/10 text-destructive cursor-pointer px-6 rounded-full"
-                    >
-                      Retry Connection
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : isTasksLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-32 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                    <p className="text-sm font-medium">Loading tasks..</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/20 border-border/50 transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="py-4">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+      {/* Control Bar */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+              <Tabs
+                  defaultValue="active"
+                  className="w-full sm:w-auto"
+                  onValueChange={(value) => {
+                      if (value === "active") table.getColumn("status")?.setFilterValue(undefined)
+                      else if (value === "progress") table.getColumn("status")?.setFilterValue("In Progress")
+                      else if (value === "completed") table.getColumn("status")?.setFilterValue("Completed")
+                  }}
+              >
+                  <TabsList className="bg-card/50 border border-border/40 p-1 h-11 rounded-xl shadow-sm">
+                      <TabsTrigger value="active" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">Registry</TabsTrigger>
+                      <TabsTrigger value="progress" className="text-[10px] font-black uppercase tracking-widest px-6 h-full gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
+                          Active
+                          {stats.inProgress > 0 && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          )}
+                      </TabsTrigger>
+                      <TabsTrigger value="completed" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">Finished</TabsTrigger>
+                  </TabsList>
+              </Tabs>
+
+              <div className="relative w-full sm:w-80 group">
+                  <IconSearch className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Input
+                      placeholder="Filter by title, location, or student..."
+                      value={globalFilter ?? ""}
+                      onChange={(event) => setGlobalFilter(event.target.value)}
+                      className="pl-11 h-11 bg-card border-border/40 rounded-xl text-sm font-semibold shadow-sm focus-visible:ring-primary/20 focus-visible:border-primary/50 transition-all"
+                  />
+              </div>
+          </div>
+
+          <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+              {isAdmin && (
+                  <Button 
+                    onClick={() => setIsAddOpen(true)} 
+                    className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2"
+                  >
+                      <IconPlus className="h-4 w-4" /> Create New Deployment
+                  </Button>
+              )}
+              <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-11 px-5 rounded-xl border-border/40 font-black uppercase text-[10px] tracking-widest shadow-sm gap-2 bg-card hover:bg-muted transition-all">
+                          <IconLayoutColumns className="h-4 w-4" /> Visibility
+                      </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[180px] rounded-xl border-border/40 shadow-2xl">
+                      <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/50 px-3 py-2">Toggle Columns</DropdownMenuLabel>
+                      {table.getAllColumns().filter((col) => col.getCanHide()).map((col) => (
+                          <DropdownMenuCheckboxItem
+                              key={col.id}
+                              className="capitalize font-bold text-xs rounded-lg m-1"
+                              checked={col.getIsVisible()}
+                              onCheckedChange={(val) => col.toggleVisibility(!!val)}
+                          >
+                              {col.id}
+                          </DropdownMenuCheckboxItem>
+                      ))}
+                  </DropdownMenuContent>
+              </DropdownMenu>
+          </div>
+      </div>
+
+      {/* Main Table Wrapper */}
+      <div className="rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl shadow-primary/5">
+        <div className="overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <Table>
+            <TableHeader className="bg-muted/40">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="hover:bg-transparent border-border/40">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 py-3 px-6 whitespace-nowrap">
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {error ? (
+                  <TableRow>
+                      <TableCell colSpan={columns.length} className="h-48 text-center text-destructive">
+                          <div className="flex flex-col items-center justify-center gap-3">
+                              <div className="p-4 bg-destructive/5 rounded-full border border-destructive/10">
+                                  <IconAlertCircle className="h-6 w-6 text-destructive" />
+                              </div>
+                              <p className="text-xs font-black uppercase tracking-widest opacity-60">Critical Link Failed</p>
+                              <Button onClick={() => refetch()} className="h-9 px-6 rounded-xl bg-destructive text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-destructive/20">Retry Sync</Button>
+                          </div>
+                      </TableCell>
+                  </TableRow>
+              ) : isTasksLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i} className="animate-pulse border-border/20">
+                          {columns.map((_, j) => (
+                              <TableCell key={j} className="py-4 px-6"><div className="h-4 bg-muted/60 rounded-full w-full" /></TableCell>
+                          ))}
+                      </TableRow>
+                  ))
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className="border-border/20 hover:bg-primary/[0.02] transition-colors group"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="py-3 px-6 transition-all duration-300">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground font-bold italic opacity-40 uppercase tracking-[0.2em] text-[10px]">
+                    No Operational Units Found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Pagination UI */}
-      <div className="flex items-center justify-between px-2 py-4 border-t border-border/10">
-        <div className="flex-1 text-xs text-muted-foreground font-medium">
-          Showing {table.getFilteredRowModel().rows.length} records
-        </div>
-        <div className="flex items-center gap-6 lg:gap-8">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-bold text-muted-foreground">Rows per page</p>
-            <Select
-              value={`${table.getState().pagination.pageSize}`}
-              onValueChange={(value) => {
-                table.setPageSize(Number(value))
-              }}
-            >
-              <SelectTrigger className="h-8 w-[70px] bg-transparent border-none font-bold text-xs">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {[10, 20, 30, 40, 50].map((pageSize) => (
-                  <SelectItem key={pageSize} value={`${pageSize}`}>
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-6">
+          <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                  <Select
+                      value={`${table.getState().pagination.pageSize}`}
+                      onValueChange={(value) => table.setPageSize(Number(value))}
+                  >
+                      <SelectTrigger className="h-9 w-[110px] bg-card border-border/40 rounded-xl font-bold text-xs shadow-sm focus:ring-primary/20">
+                          <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-border/40 shadow-2xl">
+                          {[10, 20, 50].map((size) => (
+                              <SelectItem key={size} value={`${size}`} className="text-xs font-bold">{size} Units</SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+              </div>
+              <div className="h-4 w-px bg-border/50" />
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest opacity-60">
+                  {table.getFilteredRowModel().rows.length} Active Records
+              </span>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
+
+          <div className="flex items-center gap-4">
+              <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                  Batch {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
+              </div>
+              <div className="flex items-center gap-2">
+                  <Button
+                      variant="outline"
+                      className="h-10 w-10 p-0 border-border/40 rounded-xl shadow-sm hover:bg-primary hover:text-white transition-all disabled:opacity-30 active:scale-90"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                  >
+                      <IconChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                      variant="outline"
+                      className="h-10 w-10 p-0 border-border/40 rounded-xl shadow-sm hover:bg-primary hover:text-white transition-all disabled:opacity-30 active:scale-90"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                  >
+                      <IconChevronRight className="h-4 w-4" />
+                  </Button>
+              </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 border-border/50"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <IconChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              className="h-8 w-8 p-0 border-border/50"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <IconChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* QR Code Dialog */}
       <Dialog open={isQROpen} onOpenChange={setIsQROpen}>
-        <DialogContent showCloseButton={false} className="sm:max-w-[400px] p-0 overflow-hidden bg-card border-none shadow-2xl">
-          <div className="flex flex-col items-center p-8 space-y-6">
-            <div className="flex w-full justify-between items-center">
-              <DialogTitle className="text-xl font-bold tracking-tight">Item QR Code</DialogTitle>
-              <DialogDescription className="sr-only">Scan this QR code to view task details.</DialogDescription>
-              <Button variant="ghost" size="icon" onClick={() => setIsQROpen(false)} className="rounded-full">
-                <IconX className="h-5 w-5" />
-              </Button>
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-2xl">
+          <DialogTitle className="sr-only">Task Scan ID</DialogTitle>
+          <DialogDescription className="sr-only">Scan this digital identity to track task progress in the mobile app.</DialogDescription>
+          
+          <div className="flex flex-col items-center p-8 space-y-6 relative">
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsQROpen(false)} 
+                className="absolute right-4 top-4 rounded-full hover:bg-muted transition-colors z-10"
+            >
+              <IconX className="h-5 w-5" />
+            </Button>
+
+            <div className="text-center space-y-1 pt-4">
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Operational Identity</p>
+                <h3 className="text-xl font-black uppercase tracking-tight">{selectedTask?.title}</h3>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl shadow-inner border border-border/10">
+            <div className="relative group p-6 bg-white rounded-[32px] shadow-2xl shadow-black/5 ring-1 ring-black/5">
               <QRCodeCanvas
                 id="task-qr-code"
                 value={JSON.stringify({
                   id: selectedTask?.id,
                   title: selectedTask?.title,
-                  description: selectedTask?.description,
-                  location: selectedTask?.location,
-                  hours: selectedTask?.hours,
-                  status: selectedTask?.status,
                   assignee_id: selectedTask?.assigned_to || selectedTask?.assignee?.id
                 })}
                 size={220}
                 level="H"
                 includeMargin={false}
                 imageSettings={{
-                  src: "/favicon.ico", // Using favicon as fallback logo for the center
-                  x: undefined,
-                  y: undefined,
+                  src: "/favicon.ico",
                   height: 40,
                   width: 40,
                   excavate: true,
@@ -556,24 +584,26 @@ export function TasksTable() {
               />
             </div>
 
-            <div className="text-center space-y-1">
-              <p className="text-lg font-bold tracking-tight text-foreground">{selectedTask?.title}</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold">{selectedTask?.id}</p>
+            <div className="flex flex-col items-center gap-1">
+                <Badge variant="outline" className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest bg-muted/50 border-border/50">
+                    ID: {selectedTask?.id}
+                </Badge>
+                <p className="text-[11px] text-muted-foreground font-medium mt-2">Scan with the mobile app to verify attendance</p>
             </div>
 
-            <div className="w-full grid grid-cols-2 gap-3 pt-4">
+            <div className="w-full grid grid-cols-2 gap-3 pt-2">
               <Button 
                 variant="outline"
                 onClick={() => window.open(`/track?id=${selectedTask?.id}`, '_blank')} 
-                className="gap-2 py-6 text-sm font-bold rounded-2xl border-2 transition-all hover:bg-muted active:scale-[0.98]"
+                className="h-12 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl border-border/40 bg-background hover:bg-muted transition-all active:scale-[0.95]"
               >
-                <IconExternalLink className="h-4 w-4" /> Track View
+                <IconExternalLink className="h-4 w-4" /> Tracking
               </Button>
               <Button 
                 onClick={downloadQRCode} 
-                className="gap-2 py-6 text-sm font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="h-12 gap-2 text-[10px] font-black uppercase tracking-widest rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.95]"
               >
-                <IconDownload className="h-4 w-4" /> Save PNG
+                <IconDownload className="h-4 w-4" /> Get PNG
               </Button>
             </div>
           </div>
@@ -590,139 +620,142 @@ export function TasksTable() {
           setAssigneeSearch("")
         }
       }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Edit Task Record</DialogTitle>
-            <DialogDescription>Modify the details of this service task.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Task Title</Label>
-              <Input id="edit-title" defaultValue={selectedTask?.title} placeholder="e.g. Server Maintenance" />
+        <DialogContent className="sm:max-w-[500px] bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Modify Operational Unit</DialogTitle>
+          <DialogDescription className="sr-only">Update task parameters and personnel assignments.</DialogDescription>
+          
+          <div className="p-8 space-y-6">
+            <div className="flex justify-between items-center mb-2">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Configuration</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight">Edit Task</h3>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsEditOpen(false)} className="rounded-full"><IconX className="h-5 w-5" /></Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-desc">Description</Label>
-              <Textarea id="edit-desc" defaultValue={selectedTask?.description} placeholder="Provide a detailed description of the task..." className="min-h-[100px] resize-none" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-location">Location</Label>
-                <Input id="edit-location" defaultValue={selectedTask?.location} placeholder="e.g. Room 402, Building A" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-hours">Hours Needed</Label>
-                <Input id="edit-hours" type="number" defaultValue={selectedTask?.hours} placeholder="e.g. 2" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Assigned To</Label>
-              <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between font-normal"
-                  >
-                    {selectedAssigneeId ? (
-                      users.find(u => u.id === selectedAssigneeId) ?
-                        `${users.find(u => u.id === selectedAssigneeId)?.firstname} ${users.find(u => u.id === selectedAssigneeId)?.lastname}` :
-                        selectedAssigneeId
-                    ) : "Select student..."}
-                    <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[450px] p-0" align="start">
-                  <div className="flex items-center border-b px-3">
-                    <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <Input
-                      placeholder="Search email, first or last name..."
-                      value={assigneeSearch}
-                      onChange={(e) => setAssigneeSearch(e.target.value)}
-                      className="h-10 border-none focus-visible:ring-0 bg-transparent"
-                    />
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto p-1">
-                    {filteredStudents.length === 0 ? (
-                      <div className="py-6 text-center text-sm text-muted-foreground">No student found.</div>
-                    ) : (
-                      filteredStudents.map((student) => {
-                        const fullName = `${student.firstname} ${student.lastname}`
-                        return (
-                          <div
-                            key={student.id}
-                            className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted cursor-pointer transition-colors"
-                            onClick={() => {
-                              setSelectedAssigneeId(student.id)
-                              setIsAssigneePopoverOpen(false)
-                              setAssigneeSearch("")
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium text-foreground">{fullName}</span>
-                              <span className="text-xs text-muted-foreground">{student.email}</span>
-                            </div>
-                            {selectedAssigneeId === student.id && (
-                              <IconCheck className="h-4 w-4 text-primary" />
+
+            <div className="space-y-5">
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Task Title</Label>
+                    <Input id="edit-title" defaultValue={selectedTask?.title} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Detailed Brief</Label>
+                    <Textarea id="edit-desc" defaultValue={selectedTask?.description} className="min-h-[100px] bg-muted/30 border-border/40 rounded-xl font-bold resize-none" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Deployment Site</Label>
+                        <Input id="edit-location" defaultValue={selectedTask?.location} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Quota (Hours)</Label>
+                        <Input id="edit-hours" type="number" defaultValue={selectedTask?.hours} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assigned Personnel</Label>
+                    <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
+                        <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full h-11 justify-between bg-muted/30 border-border/40 rounded-xl font-bold text-sm shadow-sm">
+                            {selectedAssigneeId ? (
+                            users.find(u => u.id === selectedAssigneeId) ?
+                                `${users.find(u => u.id === selectedAssigneeId)?.firstname} ${users.find(u => u.id === selectedAssigneeId)?.lastname}` :
+                                selectedAssigneeId
+                            ) : "Open Personnel Registry..."}
+                            <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[450px] p-0 rounded-2xl border-border/40 shadow-2xl overflow-hidden" align="start">
+                        <div className="flex items-center border-b border-border/40 px-4 bg-muted/20">
+                            <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                            <Input
+                                placeholder="Search registry by name or email..."
+                                value={assigneeSearch}
+                                onChange={(e) => setAssigneeSearch(e.target.value)}
+                                className="h-12 border-none focus-visible:ring-0 bg-transparent font-bold text-sm"
+                            />
+                        </div>
+                        <div className="max-h-[300px] overflow-y-auto p-2 bg-background/95 backdrop-blur-xl">
+                            {filteredStudents.length === 0 ? (
+                                <div className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 italic">No Personnel Found</div>
+                            ) : (
+                                filteredStudents.map((student) => {
+                                    const fullName = `${student.firstname} ${student.lastname}`
+                                    return (
+                                    <div
+                                        key={student.id}
+                                        className="flex items-center justify-between rounded-xl px-4 py-3 hover:bg-primary/5 cursor-pointer transition-all mb-1 group"
+                                        onClick={() => {
+                                            setSelectedAssigneeId(student.id)
+                                            setIsAssigneePopoverOpen(false)
+                                            setAssigneeSearch("")
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8 border border-border/50">
+                                                <AvatarImage src={student.avatar_url || ""} />
+                                                <AvatarFallback className="bg-muted text-[10px] font-black">{student.firstname?.[0]}{student.lastname?.[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{fullName}</span>
+                                                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">{student.email}</span>
+                                            </div>
+                                        </div>
+                                        {selectedAssigneeId === student.id && <IconCheck className="h-4 w-4 text-primary" />}
+                                    </div>
+                                    )
+                                })
                             )}
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                        </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
+
+            <div className="pt-2">
+                <Button
+                    onClick={async () => {
+                        const title = (document.getElementById("edit-title") as HTMLInputElement).value
+                        const description = (document.getElementById("edit-desc") as HTMLTextAreaElement).value
+                        const location = (document.getElementById("edit-location") as HTMLInputElement).value
+                        const hours = (document.getElementById("edit-hours") as HTMLInputElement).value
+
+                        await updateTask.mutateAsync({
+                            id: selectedTask!.id,
+                            updates: { title, description, location, hours, assigned_to: selectedAssigneeId }
+                        });
+                        setIsEditOpen(false);
+                    }}
+                    className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    disabled={updateTask.isPending}
+                >
+                    {updateTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Deploy Updates"}
+                </Button>
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-col gap-2">
-            <Button
-              onClick={async () => {
-                const title = (document.getElementById("edit-title") as HTMLInputElement).value
-                const description = (document.getElementById("edit-desc") as HTMLTextAreaElement).value
-                const location = (document.getElementById("edit-location") as HTMLInputElement).value
-                const hours = (document.getElementById("edit-hours") as HTMLInputElement).value
-
-                await updateTask.mutateAsync({
-                  id: selectedTask!.id,
-                  updates: {
-                    title,
-                    description,
-                    location,
-                    hours,
-                    assigned_to: selectedAssigneeId
-                  }
-                });
-                setIsEditOpen(false);
-              }}
-              className="w-full"
-              disabled={updateTask.isPending}
-            >
-              {updateTask.isPending ? "Updating..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Alert */}
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the task record for{" "}
-              <span className="font-bold text-foreground">{selectedTask?.title}</span>.
+            <AlertDialogTitle className="font-black uppercase tracking-tight">Purge Confirmation</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium">
+              You are about to permanently archive <span className="font-bold text-foreground">{selectedTask?.title}</span>. This action is logged and cannot be reversed by standard operators.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Abort Operation</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 await deleteTask.mutateAsync(selectedTask!.id);
                 setIsDeleteOpen(false);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-white rounded-xl font-bold hover:bg-destructive/90 transition-all px-6"
               disabled={deleteTask.isPending}
             >
-              {deleteTask.isPending ? "Deleting..." : "Delete Record"}
+              {deleteTask.isPending ? "Purging..." : "Confirm Purge"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -736,113 +769,120 @@ export function TasksTable() {
           setAssigneeSearch("")
         }
       }}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Add New Task</DialogTitle>
-            <DialogDescription>Enter the service task details to create a new record.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Task Title</Label>
-              <Input id="title" placeholder="e.g. Server Maintenance" />
+        <DialogContent className="sm:max-w-[500px] bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-2xl p-0 overflow-hidden">
+          <DialogTitle className="sr-only">Initialize New Unit</DialogTitle>
+          <DialogDescription className="sr-only">Create a new service task record and assign it to personnel.</DialogDescription>
+          
+          <div className="p-8 space-y-6">
+            <div className="flex justify-between items-center mb-2">
+                <div className="space-y-1">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Initialization</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight">Create Task</h3>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setIsAddOpen(false)} className="rounded-full"><IconX className="h-5 w-5" /></Button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="desc">Description</Label>
-              <Textarea id="desc" placeholder="Provide a detailed description of the task..." className="min-h-[100px] resize-none" />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="e.g. Room 402, Building A" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hours">Hours Needed</Label>
-                <Input id="hours" type="number" placeholder="e.g. 2" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Assigned To</Label>
-              <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between font-normal"
-                  >
-                    {selectedAssigneeId ? (
-                      users.find(u => u.id === selectedAssigneeId) ?
-                        `${users.find(u => u.id === selectedAssigneeId)?.firstname} ${users.find(u => u.id === selectedAssigneeId)?.lastname}` :
-                        selectedAssigneeId
-                    ) : "Select student..."}
-                    <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[450px] p-0" align="start">
-                  <div className="flex items-center border-b px-3">
-                    <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-                    <Input
-                      placeholder="Search email, first or last name..."
-                      value={assigneeSearch}
-                      onChange={(e) => setAssigneeSearch(e.target.value)}
-                      className="h-10 border-none focus-visible:ring-0 bg-transparent"
-                    />
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto p-1">
-                    {filteredStudents.length === 0 ? (
-                      <div className="py-6 text-center text-sm text-muted-foreground">No student found.</div>
-                    ) : (
-                      filteredStudents.map((student) => {
-                        const fullName = `${student.firstname} ${student.lastname}`
-                        return (
-                          <div
-                            key={student.id}
-                            className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted cursor-pointer transition-colors"
-                            onClick={() => {
-                              setSelectedAssigneeId(student.id)
-                              setIsAssigneePopoverOpen(false)
-                              setAssigneeSearch("")
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <span className="font-medium text-foreground">{fullName}</span>
-                              <span className="text-xs text-muted-foreground">{student.email}</span>
+
+            <div className="space-y-5">
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Task Title</Label>
+                    <Input id="title" placeholder="e.g. Campus Beautification" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mission Description</Label>
+                    <Textarea id="desc" placeholder="Define the operational objectives..." className="min-h-[100px] bg-muted/30 border-border/40 rounded-xl font-bold resize-none placeholder:opacity-30" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Location</Label>
+                        <Input id="location" placeholder="e.g. Quadrangle" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Hour Quota</Label>
+                        <Input id="hours" type="number" placeholder="e.g. 5" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assign Personnel</Label>
+                    <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full h-11 justify-between bg-muted/30 border-border/40 rounded-xl font-bold text-sm shadow-sm">
+                                {selectedAssigneeId ? (
+                                    users.find(u => u.id === selectedAssigneeId) ?
+                                        `${users.find(u => u.id === selectedAssigneeId)?.firstname} ${users.find(u => u.id === selectedAssigneeId)?.lastname}` :
+                                        selectedAssigneeId
+                                ) : "Select student from registry..."}
+                                <IconSelector className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[450px] p-0 rounded-2xl border-border/40 shadow-2xl overflow-hidden" align="start">
+                            <div className="flex items-center border-b border-border/40 px-4 bg-muted/20">
+                                <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                                <Input
+                                    placeholder="Search student by name or email..."
+                                    value={assigneeSearch}
+                                    onChange={(e) => setAssigneeSearch(e.target.value)}
+                                    className="h-12 border-none focus-visible:ring-0 bg-transparent font-bold text-sm"
+                                />
                             </div>
-                            {selectedAssigneeId === student.id && (
-                              <IconCheck className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                            <div className="max-h-[300px] overflow-y-auto p-2 bg-background/95 backdrop-blur-xl">
+                                {filteredStudents.length === 0 ? (
+                                    <div className="py-12 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground opacity-40 italic">No matches found</div>
+                                ) : (
+                                    filteredStudents.map((student) => {
+                                        const fullName = `${student.firstname} ${student.lastname}`
+                                        return (
+                                        <div
+                                            key={student.id}
+                                            className="flex items-center justify-between rounded-xl px-4 py-3 hover:bg-primary/5 cursor-pointer transition-all mb-1 group"
+                                            onClick={() => {
+                                                setSelectedAssigneeId(student.id)
+                                                setIsAssigneePopoverOpen(false)
+                                                setAssigneeSearch("")
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-8 w-8 border border-border/50">
+                                                    <AvatarImage src={student.avatar_url || ""} />
+                                                    <AvatarFallback className="bg-muted text-[10px] font-black">{student.firstname?.[0]}{student.lastname?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{fullName}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter">{student.email}</span>
+                                                </div>
+                                            </div>
+                                            {selectedAssigneeId === student.id && <IconCheck className="h-4 w-4 text-primary" />}
+                                        </div>
+                                        )
+                                    })
+                                )}
+                            </div>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
+
+            <div className="pt-2">
+                <Button
+                    onClick={async () => {
+                        const title = (document.getElementById("title") as HTMLInputElement).value
+                        const description = (document.getElementById("desc") as HTMLTextAreaElement).value
+                        const location = (document.getElementById("location") as HTMLInputElement).value
+                        const hours = (document.getElementById("hours") as HTMLInputElement).value
+
+                        await createTask.mutateAsync({ 
+                            title, description, location, hours, 
+                            assigned_to: selectedAssigneeId,
+                            status: "In Progress"
+                        });
+                        setIsAddOpen(false);
+                    }}
+                    className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                    disabled={createTask.isPending}
+                >
+                    {createTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Initialize Task Record"}
+                </Button>
             </div>
           </div>
-          <DialogFooter className="flex-col sm:flex-col gap-2">
-            <Button
-              onClick={async () => {
-                const title = (document.getElementById("title") as HTMLInputElement).value
-                const description = (document.getElementById("desc") as HTMLTextAreaElement).value
-                const location = (document.getElementById("location") as HTMLInputElement).value
-                const hours = (document.getElementById("hours") as HTMLInputElement).value
-
-                await createTask.mutateAsync({
-                  title,
-                  description,
-                  location,
-                  hours,
-                  status: "In Progress",
-                  assigned_to: selectedAssigneeId
-                });
-                setIsAddOpen(false);
-              }}
-              className="w-full"
-              disabled={createTask.isPending}
-            >
-              {createTask.isPending ? "Assigning..." : "Assign Task"}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
