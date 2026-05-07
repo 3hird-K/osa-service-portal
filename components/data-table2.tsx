@@ -323,15 +323,16 @@ export function DataTable2({
   data: initialData = [],
   onRefresh,
   extraControls,
-  isLoading
+  isLoading,
+  isAdmin = false
 }: {
   data: DataRow[];
   onRefresh?: () => void;
   extraControls?: React.ReactNode;
   isLoading?: boolean;
+  isAdmin?: boolean;
 }) {
   const [data, setData] = React.useState<DataRow[]>(() => (Array.isArray(initialData) ? initialData : []))
-  const { user: currentUser } = useUser()
   const queryClient = useQueryClient()
 
   React.useEffect(() => {
@@ -343,19 +344,6 @@ export function DataTable2({
   const [globalFilter, setGlobalFilter] = React.useState("")
   const [columnVisibility] = React.useState<VisibilityState>({})
   const [selectedRow, setSelectedRow] = React.useState<DataRow | null>(null)
-
-  // Check if the current viewer is an admin
-  const [viewerIsAdmin, setViewerIsAdmin] = React.useState(false)
-  React.useEffect(() => {
-    if (!currentUser?.id) return
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com"
-    fetch(`${apiUrl}/profiles/${currentUser.id}`)
-      .then((r) => r.json())
-      .then((profile) => {
-        setViewerIsAdmin(profile?.account_type?.toLowerCase() === "admin")
-      })
-      .catch(() => { })
-  }, [currentUser?.id])
 
   const columns = React.useMemo<ColumnDef<DataRow>[]>(() => [
     {
@@ -546,7 +534,7 @@ export function DataTable2({
       {selectedRow && (
         <UserSheet
           user={selectedRow}
-          isAdmin={viewerIsAdmin}
+          isAdmin={isAdmin}
           onClose={() => setSelectedRow(null)}
           onSaved={handleRefresh}
         />

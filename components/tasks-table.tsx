@@ -92,11 +92,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useUsers } from "@/hooks/use-users"
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, type Task } from "@/hooks/use-tasks"
 import { IconCheck, IconSelector } from "@tabler/icons-react"
+import { useProfile } from "@/hooks/use-profile"
 
 
 export function TasksTable() {
   const router = useRouter()
   const { data: tasks = [], isLoading: isTasksLoading, error, refetch } = useTasks()
+  const { data: profile } = useProfile()
+  const isAdmin = profile?.account_type?.toLowerCase() === "admin"
+
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
@@ -113,6 +117,15 @@ export function TasksTable() {
   const [isQROpen, setIsQROpen] = React.useState(false)
   const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
   const { data: users = [], isLoading, isError } = useUsers()
+
+  React.useEffect(() => {
+    // Hide selection column if not admin
+    setColumnVisibility(prev => ({
+      ...prev,
+      select: isAdmin
+    }))
+  }, [isAdmin])
+
   React.useEffect(() => {
     console.log("TasksTable - Users state:", { users, isLoading, isError })
   }, [users, isLoading, isError])
@@ -240,19 +253,25 @@ export function TasksTable() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[160px]">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsEditOpen(true); }}>
-              <IconEdit className="mr-2 h-4 w-4" /> Edit Record
-            </DropdownMenuItem>
+            {isAdmin && (
+              <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsEditOpen(true); }}>
+                <IconEdit className="mr-2 h-4 w-4" /> Edit Record
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsQROpen(true); }}>
               <IconQrcode className="mr-2 h-4 w-4" /> View QR Code
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => router.push(`/protected/manage-logs?taskId=${row.original.id}`)}>
               <IconClipboardList className="mr-2 h-4 w-4" /> View Logs
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive">
-              <IconTrash className="mr-2 h-4 w-4" /> Delete
-            </DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive">
+                  <IconTrash className="mr-2 h-4 w-4" /> Delete
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       ),
@@ -336,34 +355,36 @@ export function TasksTable() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <Button onClick={() => setIsAddOpen(true)} className="gap-2 cursor-pointer">
-            <IconPlus className="h-4 w-4" /> Create Task
-          </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 cursor-pointer">
-                  <IconLayoutColumns className="h-4 w-4" /> Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className="capitalize"
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) =>
-                          column.toggleVisibility(!!value)
-                        }
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    )
-                  })}
-              </DropdownMenuContent>
+          {isAdmin && (
+            <Button onClick={() => setIsAddOpen(true)} className="gap-2 cursor-pointer">
+              <IconPlus className="h-4 w-4" /> Create Task
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2 cursor-pointer">
+                <IconLayoutColumns className="h-4 w-4" /> Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  )
+                })}
+            </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
@@ -401,10 +422,10 @@ export function TasksTable() {
                         Failed to reach the task service engine. Please ensure your backend is running.
                       </p>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => refetch()} 
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => refetch()}
                       className="mt-2 h-9 text-[10px] font-bold uppercase border-destructive/20 hover:bg-destructive/10 text-destructive cursor-pointer px-6 rounded-full"
                     >
                       Retry Connection
@@ -532,12 +553,9 @@ export function TasksTable() {
               <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold">{selectedTask?.id}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 w-full pt-4">
-              <Button variant="outline" className="gap-2">
-                <IconExternalLink className="h-4 w-4" /> View Page
-              </Button>
-              <Button onClick={downloadQRCode} className="gap-2">
-                <IconDownload className="h-4 w-4" /> Save PNG
+            <div className="w-full pt-4">
+              <Button onClick={downloadQRCode} className="w-full gap-2 py-6 text-base font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <IconDownload className="h-5 w-5" /> Save PNG Image
               </Button>
             </div>
           </div>

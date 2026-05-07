@@ -15,6 +15,7 @@ const geistSans = Geist({
 //   description: "A portal for Osa Service",
 // };
 export const metadata: Metadata = {
+  metadataBase: new URL("http://localhost:3000"),
   title: "OSA Service Portal | USTP CDO",
   description:
     "The official Office of Student Affairs (OSA) Service Portal for USTP students. Access student services, tracking, and resources online.",
@@ -27,7 +28,8 @@ export const metadata: Metadata = {
   ],
 };
 
-import { ClerkProvider } from '@clerk/nextjs'
+import { ClerkProvider } from "@clerk/nextjs";
+import { AOSInit } from "@/components/aos-init";
 
 export default function RootLayout({
   children,
@@ -39,6 +41,7 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.className} antialiased overflow-x-hidden`}>
           <Providers>
+            <AOSInit />
             {children}
             <Toaster position="top-center" />
           </Providers>

@@ -13,7 +13,7 @@ import Image from "next/image";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import Logo from "@/assets/ustp.png";
-import SideImage from "@/assets/left-image.png";
+import SideImage from "@/assets/osa.jpg";
 
 export function LoginForm({
   className,

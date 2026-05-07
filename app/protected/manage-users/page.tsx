@@ -87,6 +87,7 @@ export default function ManageUsersPage() {
                     data={roleFilter === "all" ? allUsers : roleFilter === "admin" ? admins : students} 
                     onRefresh={fetchUsers}
                     isLoading={isLoading}
+                    isAdmin={isAdmin}
                     extraControls={
                         <Select defaultValue="all" onValueChange={(v) => setRoleFilter(v)}>
                             <SelectTrigger className="w-[180px] bg-muted/20 border-border/50 h-10 rounded-lg text-sm text-muted-foreground">

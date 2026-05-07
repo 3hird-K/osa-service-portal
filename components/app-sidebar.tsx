@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image"
-import Logo from "@/assets/imagess.png"
+import LogoLight from "@/assets/osa-dark.png";
+import LogoDark from "@/assets/osalogo.png";
 
 const staticData = {
   navMain: [],
@@ -55,13 +56,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="space-y-4 pt-6 pb-2">
         <div className="flex items-center gap-3 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
           <a href="/" className="flex items-center gap-3 w-full overflow-hidden group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center">
-            <div className="flex bg-[#1c1d22] p-2 rounded-xl border border-white/10 shadow-sm justify-center items-center shrink-0 transition-transform hover:scale-105">
+            <div className="relative group flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-transparent dark:bg-gradient-to-br dark:from-[#2a2b32] dark:to-[#1c1d22] border border-black/5 dark:border-white/5 shadow-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5 group-data-[collapsible=icon]:mx-auto overflow-hidden">
+              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               <Image
-                src={Logo}
+                src={LogoLight}
                 alt="Osa Logo"
-                width={28}
-                height={28}
-                className="block object-contain"
+                width={32}
+                height={32}
+                className="block dark:hidden object-contain relative z-10 transition-all duration-500 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg] rounded-md"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+              />
+              <Image
+                src={LogoDark}
+                alt="Osa Logo"
+                width={32}
+                height={32}
+                className="hidden dark:block object-contain relative z-10 transition-all duration-500 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg] rounded-md"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
               />
             </div>
             <div className="flex flex-col group-data-[collapsible=icon]:hidden">
