@@ -20,12 +20,12 @@ export function Hero() {
 
   return (
     <section className="flex flex-col items-center justify-center text-center gap-8 px-6 pt-20 pb-12 sm:gap-10 sm:py-32">
-      
+
       <a
         href="https://www.ustp.edu.ph/"
         target="_blank"
         rel="noreferrer"
-        className="group" 
+        className="group"
       >
         <Image
           src={UstpLogo}
@@ -41,7 +41,7 @@ export function Hero() {
         <h1 className="text-4xl font-extrabold tracking-tighter text-foreground sm:text-6xl md:text-7xl lg:text-8xl">
           OSA Service Portal
         </h1>
-        
+
         <p className="max-w-md text-base leading-relaxed text-muted-foreground sm:max-w-xl sm:text-lg md:text-xl">
           Streamline your{" "}
           <span className="font-semibold text-primary">community service,</span>{" "}
@@ -53,24 +53,24 @@ export function Hero() {
 
         {/* Tracking Search Interface */}
         <div className="w-full max-w-md pt-4">
-          <form 
+          <form
             onSubmit={handleSearch}
             className="group relative flex items-center p-1.5 bg-muted/40 border border-border/50 rounded-full focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/5 transition-all duration-300"
           >
             <div className="pl-4 pr-2 text-muted-foreground group-focus-within:text-primary transition-colors">
               <Search size={20} />
             </div>
-            <input 
-              type="text" 
-              placeholder="Enter Task ID to track..." 
+            <input
+              type="text"
+              placeholder="Enter Task ID to track..."
               value={taskId}
               onChange={(e) => setTaskId(e.target.value)}
               className="flex-1 bg-transparent border-none outline-none text-sm font-medium placeholder:text-muted-foreground/60 h-10"
             />
-            <Button 
-              type="submit" 
-              size="sm" 
-              className="rounded-full px-4 h-10 font-bold tracking-tight shadow-lg shadow-primary/20"
+            <Button
+              type="submit"
+              size="sm"
+              className="rounded-full px-4 h-10 font-bold tracking-tight shadow-lg shadow-primary/20 cursor-pointer"
             >
               Track <ArrowRight size={16} className="ml-2" />
             </Button>
@@ -84,4 +84,4 @@ export function Hero() {
       <div className="mt-8 h-px w-full max-w-[100px] bg-gradient-to-r from-transparent via-primary/50 to-transparent sm:max-w-md" />
     </section>
   );
-}
+}

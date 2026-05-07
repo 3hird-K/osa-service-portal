@@ -264,11 +264,11 @@ export function TasksTable() {
             <DropdownMenuItem onClick={() => router.push(`/protected/manage-logs?taskId=${row.original.id}`)}>
               <IconClipboardList className="mr-2 h-4 w-4" /> View Logs
             </DropdownMenuItem>
-            {isAdmin && (
+            {isAdmin && row.original.status?.toLowerCase() !== "completed" && (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive">
-                  <IconTrash className="mr-2 h-4 w-4" /> Delete
+                <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="text-destructive font-bold">
+                  <IconTrash className="mr-2 h-4 w-4" /> Delete Record
                 </DropdownMenuItem>
               </>
             )}
@@ -545,6 +545,14 @@ export function TasksTable() {
                 size={220}
                 level="H"
                 includeMargin={false}
+                imageSettings={{
+                  src: "/favicon.ico", // Using favicon as fallback logo for the center
+                  x: undefined,
+                  y: undefined,
+                  height: 40,
+                  width: 40,
+                  excavate: true,
+                }}
               />
             </div>
 
@@ -553,9 +561,19 @@ export function TasksTable() {
               <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-bold">{selectedTask?.id}</p>
             </div>
 
-            <div className="w-full pt-4">
-              <Button onClick={downloadQRCode} className="w-full gap-2 py-6 text-base font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                <IconDownload className="h-5 w-5" /> Save PNG Image
+            <div className="w-full grid grid-cols-2 gap-3 pt-4">
+              <Button 
+                variant="outline"
+                onClick={() => window.open(`/track?id=${selectedTask?.id}`, '_blank')} 
+                className="gap-2 py-6 text-sm font-bold rounded-2xl border-2 transition-all hover:bg-muted active:scale-[0.98]"
+              >
+                <IconExternalLink className="h-4 w-4" /> Track View
+              </Button>
+              <Button 
+                onClick={downloadQRCode} 
+                className="gap-2 py-6 text-sm font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <IconDownload className="h-4 w-4" /> Save PNG
               </Button>
             </div>
           </div>

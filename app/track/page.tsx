@@ -86,102 +86,97 @@ function TrackContent() {
     );
   }
 
-  // QR Payload for Admin Verification
+  // QR Payload synchronized with Manage Tasks section
   const qrPayload = JSON.stringify({
-    taskId: task.id,
-    type: "TASK_VERIFICATION",
-    source: "WEB_PORTAL",
-    timestamp: new Date().toISOString(),
+    id: task.id,
+    title: task.title,
+    description: task.description,
+    location: task.location,
+    hours: task.hours,
+    status: task.status,
+    assignee_id: task.assigned_to || task.assignee?.id
   });
 
   return (
-    <div className="container max-w-2xl py-12 px-4 mx-auto">
-      <Link href="/" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-8 transition-colors">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Portal
-      </Link>
+    <div className="flex flex-col h-screen bg-muted/30 overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-lg mx-auto w-full gap-4">
 
-      <div className="grid gap-8">
-        <Card className="overflow-hidden border-2 border-primary/10 shadow-2xl shadow-primary/5 rounded-[32px]">
-          <CardHeader className="bg-primary/5 border-b border-primary/10 pb-8 pt-8">
-            <div className="flex justify-between items-start">
-              <Badge variant="outline" className="bg-background/50 backdrop-blur-sm border-primary/20 text-primary font-bold px-3 py-1 mb-4">
-                Live Task Status
+        {/* Compact Back Link */}
+        <Link href="/" className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-2">
+          <ArrowLeft className="mr-1.5 h-3 w-3" /> Back to Portal
+        </Link>
+
+        <Card className="w-full overflow-hidden border-2 border-primary/10 shadow-2xl shadow-primary/5 rounded-[40px] flex flex-col bg-card">
+          <CardHeader className="bg-primary/5 border-b border-primary/10 py-6 px-6 text-center">
+            <div className="flex flex-col items-center gap-2">
+              <Badge variant="outline" className="bg-background/50 backdrop-blur-sm border-primary/20 text-primary font-bold text-[9px] uppercase tracking-[0.2em] px-3 py-0.5">
+                Verification Required
               </Badge>
-              <div className="h-10 w-10 rounded-full bg-background flex items-center justify-center shadow-sm border border-primary/10">
-                <ShieldCheck className="h-6 w-6 text-primary" />
+              <CardTitle className="text-2xl font-black tracking-tight leading-tight">
+                {task.title}
+              </CardTitle>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">Task ID:</span>
+                <span className="font-mono font-bold text-xs text-foreground bg-muted px-2 py-0.5 rounded">{task.id}</span>
               </div>
             </div>
-            <CardTitle className="text-3xl font-black tracking-tight leading-tight">
-              {task.title}
-            </CardTitle>
-            <CardDescription className="text-base mt-2">
-              ID: <span className="font-mono font-bold text-foreground">{task.id}</span>
-            </CardDescription>
           </CardHeader>
-          
-          <CardContent className="pt-10 pb-10 flex flex-col items-center">
-            {/* Main QR Code Section */}
+
+          <CardContent className="py-8 flex flex-col items-center gap-6">
+            {/* Centered QR Code */}
             <div className="relative group">
               <div className="absolute -inset-4 bg-primary/20 rounded-[48px] blur-3xl group-hover:bg-primary/30 transition-all duration-500 opacity-50" />
-              <div className="relative bg-white p-8 rounded-[40px] shadow-2xl border-8 border-background">
+              <div className="relative bg-white p-6 rounded-[36px] shadow-2xl border-4 border-background">
                 <QRCodeSVG
                   value={qrPayload}
-                  size={240}
+                  size={180}
                   level="H"
                   includeMargin={false}
                   imageSettings={{
                     src: "/favicon.ico",
                     x: undefined,
                     y: undefined,
-                    height: 40,
-                    width: 40,
+                    height: 36,
+                    width: 36,
                     excavate: true,
                   }}
                 />
               </div>
             </div>
 
-            <div className="mt-10 text-center space-y-4 px-6">
-              <div className="p-4 rounded-2xl bg-muted/50 border border-border/50 inline-flex flex-col gap-2 w-full">
-                <p className="text-sm font-bold text-foreground leading-relaxed">
+            {/* Task Snapshot */}
+            <div className="w-full px-4 space-y-4">
+              <div className="p-4 rounded-2xl bg-muted/50 border border-border/50 text-center">
+                <p className="text-xs font-bold text-foreground leading-relaxed line-clamp-2 mb-3 px-2">
                   {task.description || "No description provided."}
                 </p>
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-2 pt-3 border-t border-border/30">
-                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                      <MapPin className="h-3 w-3" /> {task.location || "Station Unknown"}
-                   </div>
-                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                      <Clock className="h-3 w-3" /> {task.hours} Hours
-                   </div>
+                <div className="flex items-center justify-center gap-4 pt-3 border-t border-border/30">
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <MapPin className="h-3 w-3 text-primary" /> {task.location || "Station"}
+                  </div>
+                  <div className="h-3 w-[1px] bg-border/50" />
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <Clock className="h-3 w-3 text-primary" /> {task.hours} Hours
+                  </div>
+                  <div className="h-3 w-[1px] bg-border/50" />
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold text-green-500 uppercase tracking-wider">
+                    <div className="h-1.5 w-1.5 rounded-full bg-current animate-pulse mr-1" /> {task.status || "Live"}
+                  </div>
                 </div>
               </div>
-              
-              <p className="text-xs text-muted-foreground max-w-[280px] mx-auto leading-5 font-medium italic opacity-70">
-                Show this QR code to the station supervisor to verify your attendance and log your hours.
+
+              <p className="text-[9px] text-muted-foreground text-center px-4 leading-relaxed font-bold uppercase tracking-[0.1em] opacity-40">
+                Show this to your supervisor to verify attendance
               </p>
             </div>
           </CardContent>
         </Card>
 
-        {/* Status Timeline or Meta Info */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div className="p-5 rounded-3xl bg-card border border-border/50 flex items-center gap-4 shadow-sm">
-            <div className="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Date Assigned</p>
-              <p className="text-sm font-bold">{new Date(task.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
-            </div>
-          </div>
-          <div className="p-5 rounded-3xl bg-card border border-border/50 flex items-center gap-4 shadow-sm">
-             <div className="h-10 w-10 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500">
-              <div className="h-2 w-2 rounded-full bg-current animate-pulse" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Status</p>
-              <p className="text-sm font-bold capitalize">{task.status || "Pending"}</p>
-            </div>
+        {/* Footer Meta */}
+        <div className="flex items-center gap-4 mt-2">
+          <div className="flex items-center gap-2 opacity-50">
+            <ShieldCheck className="h-4 w-4 text-primary" />
+            <span className="text-[9px] font-bold uppercase tracking-widest">Secure Verification Portal</span>
           </div>
         </div>
       </div>

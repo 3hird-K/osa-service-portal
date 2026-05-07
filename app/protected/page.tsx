@@ -10,7 +10,12 @@ import {
   IconLoader2,
   IconAlertCircle,
   IconExternalLink,
-  IconActivity
+  IconActivity,
+  IconMapPin,
+  IconCalendar,
+  IconUser,
+  IconClipboardCheck,
+  IconInfoCircle
 } from "@tabler/icons-react";
 import {
   Card,
@@ -31,13 +36,22 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { useDashboardStats } from "@/hooks/use-dashboard";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 export default function DashboardPage() {
   const { data: stats, isLoading, isError, refetch } = useDashboardStats();
   const router = useRouter();
+  const [selectedLog, setSelectedLog] = React.useState<any>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
 
   if (isLoading) {
     return (
@@ -315,8 +329,12 @@ export default function DashboardPage() {
           <CardContent className="flex-1 overflow-y-auto px-4">
             <div className="space-y-4">
               {stats?.recent_logs && stats.recent_logs.length > 0 ? (
-                stats.recent_logs.map((log) => (
-                  <div key={log.id} className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors group">
+                stats.recent_logs.slice(0, 3).map((log) => (
+                  <div
+                    key={log.id}
+                    onClick={() => { setSelectedLog(log); setIsDetailsOpen(true); }}
+                    className="flex items-start gap-3 p-3 rounded-xl hover:bg-muted/30 transition-colors group cursor-pointer"
+                  >
                     <Avatar className="h-10 w-10 border border-border shadow-sm">
                       <AvatarImage src={log.user?.avatar_url} />
                       <AvatarFallback className="bg-muted text-xs font-bold uppercase tracking-tighter">
@@ -367,6 +385,107 @@ export default function DashboardPage() {
           </div>
         </Card>
       </div>
+
+      {/* Activity Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-md bg-card border-border rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 pb-2">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <IconActivity className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl font-bold">Activity Details</DialogTitle>
+                <DialogDescription className="text-xs">
+                  Reviewing student field submission
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {selectedLog && (
+            <div className="p-6 pt-2 space-y-6">
+              {/* Student Info */}
+              <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-2xl border border-border/50">
+                <Avatar className="h-12 w-12 border-2 border-primary/20">
+                  <AvatarImage src={selectedLog.user?.avatar_url} />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                    {selectedLog.user?.firstname?.[0]}{selectedLog.user?.lastname?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-bold text-foreground">
+                    {selectedLog.user?.firstname} {selectedLog.user?.lastname}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{selectedLog.user?.email}</p>
+                </div>
+                <Badge className="ml-auto bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20">
+                  Verified Student
+                </Badge>
+              </div>
+
+              {/* Log Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <IconCalendar className="h-3 w-3" /> Date Logged
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {format(new Date(selectedLog.date), "MMMM dd, yyyy")}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatDistanceToNow(new Date(selectedLog.date), { addSuffix: true })}
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                    <IconClock className="h-3 w-3" /> Time Rendered
+                  </p>
+                  <p className="text-sm font-black text-amber-500">
+                    {selectedLog.hours} Hours
+                  </p>
+                </div>
+              </div>
+
+              {/* Task Details */}
+              <div className="space-y-3 p-4 bg-muted/20 rounded-2xl border border-border/30">
+                 <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                      <IconClipboardCheck className="h-3 w-3" /> Related Task
+                    </p>
+                    <Badge variant="outline" className="text-[9px] font-bold h-4 px-1.5 py-0">
+                      {selectedLog.task_id}
+                    </Badge>
+                 </div>
+                 <p className="text-sm font-bold text-primary">{selectedLog.task?.title}</p>
+                 <p className="text-xs text-muted-foreground leading-relaxed italic">
+                   "{selectedLog.task?.description || "No task description available."}"
+                 </p>
+                 <div className="flex items-center gap-1.5 pt-2">
+                    <IconMapPin className="h-3.5 w-3.5 text-zinc-500" />
+                    <span className="text-xs font-medium text-zinc-500">{selectedLog.task?.location || "Field Assignment"}</span>
+                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button 
+                  onClick={() => setIsDetailsOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-100 text-xs font-bold hover:bg-zinc-700 transition-colors"
+                >
+                  Close Detail
+                </button>
+                <button 
+                  onClick={() => router.push(`/protected/manage-logs?taskId=${selectedLog.task_id}`)}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition-all"
+                >
+                  Full Audit Log <IconArrowUpRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
