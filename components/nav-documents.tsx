@@ -53,9 +53,6 @@ export function NavDocuments({
                     <item.icon className={`h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110`} />
                   </div>
                   <span className="font-bold text-[11px] uppercase tracking-wider group-data-[collapsible=icon]:hidden">{item.name}</span>
-                  {isActive && (
-                    <div className="ml-auto w-1 h-4 bg-white/40 rounded-full group-data-[collapsible=icon]:hidden" />
-                  )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
