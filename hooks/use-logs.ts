@@ -15,11 +15,14 @@ export interface TimeLog {
     evidence_urls: string | null // JSON string
     task?: {
         title: string
+        description?: string
     }
     user?: {
         firstname: string
         lastname: string
         email: string
+        avatar_url?: string
+        image_url?: string
     }
 }
 

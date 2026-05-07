@@ -8,11 +8,11 @@ import {
   Wifi,
   Download,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { StatusIndicator } from "@/components/status-indicator";
 import { FeatureCard } from "@/components/feature-card";
-import MobileAppQR from "@/assets/april-8-update.png";
+import { QRCodeSVG } from "qrcode.react";
+import OSALogo from "@/assets/osalogo.png";
 
 const mobileFeatures = [
   {
@@ -42,6 +42,8 @@ const mobileFeatures = [
 ];
 
 export function MobileAppLink() {
+  const downloadUrl = "https://www.dropbox.com/scl/fi/6qb72roidbrc7jbh753ns/may8update.apk?rlkey=lbq140p0n8guu5dz6uo4ud9lr&st=5c3xn82k&dl=1";
+
   return (
     <section className="w-full max-w-5xl mx-auto my-8 px-4 sm:px-12">
       <div className="relative overflow-hidden rounded-2xl border border-primary/10 bg-gradient-to-br from-card to-muted/50 p-5 sm:p-10 shadow-xl">
@@ -88,13 +90,20 @@ export function MobileAppLink() {
               <div className="relative group flex flex-col items-center gap-4 rounded-2xl border border-primary/10 bg-background/60 backdrop-blur-xl p-6 shadow-lg transition-all duration-300 hover:shadow-2xl hover:border-primary/20 hover:scale-[1.02]">
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 <div className="relative">
-                  <div className="rounded-xl overflow-hidden bg-white p-2 shadow-sm ring-1 ring-black/5">
-                    <Image
-                      src={MobileAppQR}
-                      alt="Download OSA Service Mobile App"
-                      width={160}
-                      height={160}
-                      className="rounded-lg"
+                  <div className="rounded-xl overflow-hidden bg-white p-3 shadow-sm ring-1 ring-black/5">
+                    <QRCodeSVG 
+                      value={downloadUrl}
+                      size={160}
+                      level="H"
+                      includeMargin={false}
+                      imageSettings={{
+                        src: OSALogo.src,
+                        x: undefined,
+                        y: undefined,
+                        height: 34,
+                        width: 34,
+                        excavate: true,
+                      }}
                     />
                   </div>
                 </div>

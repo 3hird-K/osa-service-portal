@@ -11,14 +11,11 @@ import {
     SelectValue 
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DataTable2 } from "@/components/data-table2";
+import { UsersTable } from "@/components/users-table";
 import { useProfile } from "@/hooks/use-profile";
 
-
 export default function ManageUsersPage() {
-    const [roleFilter, setRoleFilter] = useState("all");
     const { data: profile } = useProfile();
-
     const isAdmin = profile?.account_type?.toLowerCase() === "admin";
 
     const { data: allUsers = [], isLoading, error, refetch: fetchUsers } = useQuery({
@@ -29,10 +26,6 @@ export default function ManageUsersPage() {
                 fetch(`${baseUrl}/students`),
                 fetch(`${baseUrl}/admins`),
             ]);
-
-            if (!studentsRes.ok || !adminsRes.ok) {
-                console.warn("Backend fetch failed, using empty data");
-            }
 
             const [students, admins] = await Promise.all([
                 studentsRes.ok ? studentsRes.json() : Promise.resolve([]),
@@ -50,58 +43,51 @@ export default function ManageUsersPage() {
         refetchInterval: 10000,
     });
 
-    const students = allUsers.filter((u: any) => u.account_type?.toLowerCase() !== "admin");
-    const admins = allUsers.filter((u: any) => u.account_type?.toLowerCase() === "admin");
-
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-background min-h-screen text-foreground">
-            {/* Header */}
-            <div className="pb-4 border-b border-border/30">
-                <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-3xl font-bold tracking-tight">Manage Users</h2>
-                    <Badge className="rounded-full px-3 py-1 text-xs font-semibold bg-primary/20 text-primary border border-primary/30">
-                        {isLoading ? "—" : allUsers.length} Total Profiles
-                    </Badge>
-                    {isAdmin && (
-                        <Badge className="rounded-full px-3 py-1 text-xs font-semibold bg-primary text-primary-foreground">
-                            Admin Mode Active
+        <div className="flex-1 space-y-8 p-8 pt-6 bg-background min-h-screen text-foreground">
+            {/* Premium Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3 mb-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                            User Registry
+                        </p>
+                        <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
+                            Live Sync Active
                         </Badge>
-                    )}
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent uppercase">
+                        Manage Users
+                    </h2>
+                    <p className="text-sm text-muted-foreground font-medium max-w-2xl">
+                        {isAdmin
+                            ? "Administrative control panel for user lifecycle management. You can upgrade roles, audit profiles, and maintain personnel integrity."
+                            : "Registry of all active OSA service participants. Role modifications require administrative credentials."}
+                    </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                    {isAdmin
-                        ? "You have administrative rights. You can upgrade roles, delete app data, and manage personnel."
-                        : "Viewing all registered users. Contact an admin to make changes."}
-                </p>
+
+                {isAdmin && (
+                    <Badge variant="outline" className="h-12 px-6 rounded-xl bg-primary/5 text-primary border-primary/20 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-lg shadow-primary/5 hover:bg-primary/10 transition-colors">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        Admin Privileges Active
+                    </Badge>
+                )}
             </div>
 
             {error && (
-                <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
-                    Error: {error instanceof Error ? error.message : "An error occurred"}
+                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive text-sm font-bold flex items-center gap-3">
+                    <IconShieldCheck className="h-5 w-5" />
+                    <span>System Error: {error instanceof Error ? error.message : "Failed to establish secure registry connection"}</span>
                 </div>
             )}
 
             {/* Table Area */}
-            <div className="mt-2">
-                <DataTable2 
-                    data={roleFilter === "all" ? allUsers : roleFilter === "admin" ? admins : students} 
-                    onRefresh={fetchUsers}
-                    isLoading={isLoading}
-                    isAdmin={isAdmin}
-                    extraControls={
-                        <Select defaultValue="all" onValueChange={(v) => setRoleFilter(v)}>
-                            <SelectTrigger className="w-[180px] bg-muted/20 border-border/50 h-10 rounded-lg text-sm text-muted-foreground">
-                                <SelectValue placeholder="Filter by role" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card border-border">
-                                <SelectItem value="all">All Users</SelectItem>
-                                <SelectItem value="student">Students</SelectItem>
-                                <SelectItem value="admin">Admins</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    }
-                />
-            </div>
+            <UsersTable 
+                data={allUsers} 
+                isLoading={isLoading} 
+                isAdmin={isAdmin} 
+                onRefresh={fetchUsers} 
+            />
         </div>
     );
 }
