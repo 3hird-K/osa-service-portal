@@ -110,7 +110,7 @@ export function TasksTable() {
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
-  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'title', desc: false }])
+  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'created_at', desc: true }])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
@@ -120,13 +120,15 @@ export function TasksTable() {
   const [isEditOpen, setIsEditOpen] = React.useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false)
   const [isQROpen, setIsQROpen] = React.useState(false)
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = React.useState(false)
   const [selectedTask, setSelectedTask] = React.useState<Task | null>(null)
   const { data: users = [], isLoading } = useUsers()
 
   React.useEffect(() => {
     setColumnVisibility(prev => ({
       ...prev,
-      select: isAdmin
+      select: isAdmin,
+      created_at: false
     }))
   }, [isAdmin])
 
@@ -157,6 +159,11 @@ export function TasksTable() {
 
   const columns: ColumnDef<Task>[] = [
     {
+      accessorKey: "created_at",
+      header: "Timestamp",
+      enableHiding: true,
+    },
+    {
       id: "select",
       header: ({ table }) => (
         <Checkbox
@@ -186,7 +193,7 @@ export function TasksTable() {
             {row.getValue("title")}
           </span>
           <span className="text-[10px] text-muted-foreground font-medium line-clamp-1 mt-0.5 uppercase tracking-wider">
-            {row.original.description || "No specific brief provided"}
+            {row.original.description || "No description provided"}
           </span>
         </div>
       ),
@@ -222,7 +229,7 @@ export function TasksTable() {
     },
     {
       id: "assignee",
-      header: "Personnel",
+      header: "Assignee",
       cell: ({ row }) => {
         const assignee = row.original.assignee
         if (!assignee) return (
@@ -252,19 +259,19 @@ export function TasksTable() {
     },
     {
       accessorKey: "location",
-      header: "Deployment",
+      header: "Location",
       cell: ({ row }) => (
         <div className="flex items-center gap-2 text-muted-foreground">
           <div className="p-1.5 rounded-lg bg-muted/50 border border-border/30">
             <IconMapPin className="h-3 w-3" />
           </div>
-          <span className="text-xs font-bold tracking-tight">{row.getValue("location") || "Field Office"}</span>
+          <span className="text-xs font-bold tracking-tight">{row.getValue("location") || "No Location"}</span>
         </div>
       ),
     },
     {
       accessorKey: "hours",
-      header: "Requirement",
+      header: "Hours",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
             <Badge variant="outline" className="h-7 px-3 rounded-lg border-amber-500/20 bg-amber-500/5 text-amber-500 gap-1.5">
@@ -301,7 +308,7 @@ export function TasksTable() {
               <>
                 <DropdownMenuSeparator className="bg-border/40" />
                 <DropdownMenuItem onClick={() => { setSelectedTask(row.original); setIsDeleteOpen(true); }} className="rounded-lg m-1 font-bold text-xs gap-2 text-destructive hover:bg-destructive/10 transition-colors">
-                  <IconTrash className="h-4 w-4" /> Purge Task
+                  <IconTrash className="h-4 w-4" /> Delete Task
                 </DropdownMenuItem>
               </>
             )}
@@ -351,10 +358,10 @@ export function TasksTable() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-              { label: "Active Pipeline", value: stats.total, icon: IconClipboardList, color: "text-primary" },
-              { label: "Field Operations", value: stats.inProgress, icon: IconActivity, color: "text-blue-500" },
-              { label: "Completed Units", value: stats.completed, icon: IconCheck, color: "text-emerald-500" },
-              { label: "System Alerts", value: stats.maintenance, icon: IconAlertCircle, color: "text-destructive" },
+              { label: "Total Tasks", value: stats.total, icon: IconClipboardList, color: "text-primary" },
+              { label: "In Progress", value: stats.inProgress, icon: IconActivity, color: "text-blue-500" },
+              { label: "Completed", value: stats.completed, icon: IconCheck, color: "text-emerald-500" },
+              { label: "Maintenance", value: stats.maintenance, icon: IconAlertCircle, color: "text-destructive" },
           ].map((stat, i) => (
               <div key={i} className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 transition-all hover:shadow-xl hover:shadow-primary/5">
                   <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -379,14 +386,14 @@ export function TasksTable() {
                   }}
               >
                   <TabsList className="bg-card/50 border border-border/40 p-1 h-11 rounded-xl shadow-sm">
-                      <TabsTrigger value="active" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">Registry</TabsTrigger>
+                      <TabsTrigger value="active" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">All Tasks</TabsTrigger>
                       <TabsTrigger value="progress" className="text-[10px] font-black uppercase tracking-widest px-6 h-full gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">
                           Active
                           {stats.inProgress > 0 && (
                               <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
                           )}
                       </TabsTrigger>
-                      <TabsTrigger value="completed" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">Finished</TabsTrigger>
+                      <TabsTrigger value="completed" className="text-[10px] font-black uppercase tracking-widest px-6 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg transition-all">Completed</TabsTrigger>
                   </TabsList>
               </Tabs>
 
@@ -402,12 +409,21 @@ export function TasksTable() {
           </div>
 
           <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
+              {isAdmin && table.getFilteredSelectedRowModel().rows.length > 0 && (
+                  <Button 
+                    variant="destructive"
+                    onClick={() => setIsBulkDeleteOpen(true)}
+                    className="h-11 px-6 rounded-xl bg-destructive text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-destructive/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2"
+                  >
+                      <IconTrash className="h-4 w-4" /> Delete Selected ({table.getFilteredSelectedRowModel().rows.length})
+                  </Button>
+              )}
               {isAdmin && (
                   <Button 
                     onClick={() => setIsAddOpen(true)} 
                     className="h-11 px-6 rounded-xl bg-primary text-primary-foreground font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all gap-2"
                   >
-                      <IconPlus className="h-4 w-4" /> Create New Deployment
+                      <IconPlus className="h-4 w-4" /> Create Task
                   </Button>
               )}
               <DropdownMenu>
@@ -520,7 +536,7 @@ export function TasksTable() {
 
           <div className="flex items-center gap-4">
               <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                  Batch {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
+                  Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount() || 1}
               </div>
               <div className="flex items-center gap-2">
                   <Button
@@ -550,17 +566,10 @@ export function TasksTable() {
           <DialogDescription className="sr-only">Scan this digital identity to track task progress in the mobile app.</DialogDescription>
           
           <div className="flex flex-col items-center p-8 space-y-6 relative">
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => setIsQROpen(false)} 
-                className="absolute right-4 top-4 rounded-full hover:bg-muted transition-colors z-10"
-            >
-              <IconX className="h-5 w-5" />
-            </Button>
+
 
             <div className="text-center space-y-1 pt-4">
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Operational Identity</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Task QR Code</p>
                 <h3 className="text-xl font-black uppercase tracking-tight">{selectedTask?.title}</h3>
             </div>
 
@@ -627,10 +636,9 @@ export function TasksTable() {
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-center mb-2">
                 <div className="space-y-1">
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Configuration</p>
-                    <h3 className="text-2xl font-black uppercase tracking-tight">Edit Task</h3>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Edit Task</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight">Task Details</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsEditOpen(false)} className="rounded-full"><IconX className="h-5 w-5" /></Button>
             </div>
 
             <div className="space-y-5">
@@ -639,21 +647,21 @@ export function TasksTable() {
                     <Input id="edit-title" defaultValue={selectedTask?.title} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Detailed Brief</Label>
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Description</Label>
                     <Textarea id="edit-desc" defaultValue={selectedTask?.description} className="min-h-[100px] bg-muted/30 border-border/40 rounded-xl font-bold resize-none" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Deployment Site</Label>
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Location</Label>
                         <Input id="edit-location" defaultValue={selectedTask?.location} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Quota (Hours)</Label>
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Required Hours</Label>
                         <Input id="edit-hours" type="number" defaultValue={selectedTask?.hours} className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold" />
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assigned Personnel</Label>
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assigned Student</Label>
                     <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
                         <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full h-11 justify-between bg-muted/30 border-border/40 rounded-xl font-bold text-sm shadow-sm">
@@ -729,7 +737,7 @@ export function TasksTable() {
                     className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     disabled={updateTask.isPending}
                 >
-                    {updateTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Deploy Updates"}
+                    {updateTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Save Changes"}
                 </Button>
             </div>
           </div>
@@ -740,13 +748,13 @@ export function TasksTable() {
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent className="rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-black uppercase tracking-tight">Purge Confirmation</AlertDialogTitle>
+            <AlertDialogTitle className="font-black uppercase tracking-tight">Delete Task</AlertDialogTitle>
             <AlertDialogDescription className="text-sm font-medium">
-              You are about to permanently archive <span className="font-bold text-foreground">{selectedTask?.title}</span>. This action is logged and cannot be reversed by standard operators.
+              Are you sure you want to delete <span className="font-bold text-foreground">{selectedTask?.title}</span>? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-3">
-            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Abort Operation</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={async () => {
                 await deleteTask.mutateAsync(selectedTask!.id);
@@ -755,7 +763,40 @@ export function TasksTable() {
               className="bg-destructive text-white rounded-xl font-bold hover:bg-destructive/90 transition-all px-6"
               disabled={deleteTask.isPending}
             >
-              {deleteTask.isPending ? "Purging..." : "Confirm Purge"}
+              {deleteTask.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Alert */}
+      <AlertDialog open={isBulkDeleteOpen} onOpenChange={setIsBulkDeleteOpen}>
+        <AlertDialogContent className="rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-black uppercase tracking-tight">Delete Multiple Tasks</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium">
+              Are you sure you want to delete <span className="font-bold text-foreground">{table.getFilteredSelectedRowModel().rows.length} tasks</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                const selectedRows = table.getFilteredSelectedRowModel().rows;
+                const deletePromises = selectedRows.map(row => deleteTask.mutateAsync(row.original.id));
+                try {
+                  await Promise.all(deletePromises);
+                  setRowSelection({});
+                  setIsBulkDeleteOpen(false);
+                  toast.success(`Successfully deleted ${selectedRows.length} tasks`);
+                } catch (err) {
+                  toast.error("Failed to delete tasks");
+                }
+              }}
+              className="bg-destructive text-white rounded-xl font-bold hover:bg-destructive/90 transition-all px-6"
+              disabled={deleteTask.isPending}
+            >
+              {deleteTask.isPending ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -776,10 +817,9 @@ export function TasksTable() {
           <div className="p-8 space-y-6">
             <div className="flex justify-between items-center mb-2">
                 <div className="space-y-1">
-                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Initialization</p>
-                    <h3 className="text-2xl font-black uppercase tracking-tight">Create Task</h3>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest">Create Task</p>
+                    <h3 className="text-2xl font-black uppercase tracking-tight">New Task</h3>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => setIsAddOpen(false)} className="rounded-full"><IconX className="h-5 w-5" /></Button>
             </div>
 
             <div className="space-y-5">
@@ -788,8 +828,8 @@ export function TasksTable() {
                     <Input id="title" placeholder="e.g. Campus Beautification" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mission Description</Label>
-                    <Textarea id="desc" placeholder="Define the operational objectives..." className="min-h-[100px] bg-muted/30 border-border/40 rounded-xl font-bold resize-none placeholder:opacity-30" />
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Description</Label>
+                    <Textarea id="desc" placeholder="What needs to be done?" className="min-h-[100px] bg-muted/30 border-border/40 rounded-xl font-bold resize-none placeholder:opacity-30" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -797,12 +837,12 @@ export function TasksTable() {
                         <Input id="location" placeholder="e.g. Quadrangle" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Hour Quota</Label>
+                        <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Required Hours</Label>
                         <Input id="hours" type="number" placeholder="e.g. 5" className="h-11 bg-muted/30 border-border/40 rounded-xl font-bold placeholder:opacity-30" />
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assign Personnel</Label>
+                    <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Assign Student</Label>
                     <Popover open={isAssigneePopoverOpen} onOpenChange={setIsAssigneePopoverOpen}>
                         <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full h-11 justify-between bg-muted/30 border-border/40 rounded-xl font-bold text-sm shadow-sm">
@@ -879,7 +919,7 @@ export function TasksTable() {
                     className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                     disabled={createTask.isPending}
                 >
-                    {createTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Initialize Task Record"}
+                    {createTask.isPending ? <IconLoader2 className="h-4 w-4 mr-2 animate-spin" /> : "Create Task"}
                 </Button>
             </div>
           </div>

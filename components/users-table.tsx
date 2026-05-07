@@ -92,7 +92,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
         {
             id: "studentName",
             accessorFn: (row) => `${row.firstname} ${row.lastname} ${row.email}`,
-            header: "User Profile",
+            header: "User",
             cell: ({ row }) => {
                 const user = row.original
                 const name = `${user.firstname} ${user.lastname}`
@@ -122,7 +122,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
         },
         {
             accessorKey: "id",
-            header: "Identification",
+            header: "ID",
             cell: ({ row }) => (
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-muted/50 border border-border/30">
@@ -136,7 +136,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
         },
         {
             accessorKey: "account_type",
-            header: "Access Level",
+            header: "Role",
             cell: ({ row }) => {
                 const type = row.original.account_type?.toLowerCase()
                 const is_admin = type === "admin"
@@ -157,7 +157,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
         },
         {
             id: "actions",
-            header: "Management",
+            header: "Actions",
             cell: ({ row }) => (
                 <Button
                     variant="outline"
@@ -165,7 +165,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
                     onClick={() => setSelectedUser(row.original)}
                     className="h-8 rounded-xl px-4 font-black uppercase text-[9px] tracking-widest border-border/40 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shadow-sm"
                 >
-                    Configure
+                    Edit
                 </Button>
             ),
         },
@@ -200,10 +200,10 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                    { label: "Total Profiles", value: stats.total, icon: IconUsers, color: "text-primary", bg: "bg-primary/5" },
-                    { label: "Active Admins", value: stats.admins, icon: IconShieldCheck, color: "text-blue-500", bg: "bg-blue-500/5" },
-                    { label: "Student Base", value: stats.students, icon: IconUser, color: "text-amber-500", bg: "bg-amber-500/5" },
-                    { label: "Real-time Online", value: stats.online, icon: IconActivity, color: "text-emerald-500", bg: "bg-emerald-500/5" },
+                    { label: "Total Users", value: stats.total, icon: IconUsers, color: "text-primary", bg: "bg-primary/5" },
+                    { label: "Admins", value: stats.admins, icon: IconShieldCheck, color: "text-blue-500", bg: "bg-blue-500/5" },
+                    { label: "Students", value: stats.students, icon: IconUser, color: "text-amber-500", bg: "bg-amber-500/5" },
+                    { label: "Online", value: stats.online, icon: IconActivity, color: "text-emerald-500", bg: "bg-emerald-500/5" },
                 ].map((stat, i) => (
                     <div key={i} className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 transition-all hover:shadow-xl hover:shadow-primary/5">
                         <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform ${stat.color}`}>
@@ -271,7 +271,7 @@ export function UsersTable({ data, isLoading, isAdmin, onRefresh }: UsersTablePr
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} className="h-48 text-center text-muted-foreground font-bold italic opacity-40">
-                                        No profiles found in the registry.
+                                        No users found.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -417,8 +417,8 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
     return (
         <Dialog open={!!user} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-md bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl rounded-2xl p-0 overflow-hidden">
-                <DialogTitle className="sr-only">Configure User Profile</DialogTitle>
-                <DialogDescription className="sr-only">Edit user details, roles, or remove the profile from the system.</DialogDescription>
+                <DialogTitle className="sr-only">Edit User Profile</DialogTitle>
+                <DialogDescription className="sr-only">Edit user details and roles.</DialogDescription>
                 
                 <div className="relative">
                     {/* Header */}
@@ -466,14 +466,14 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Access Role</Label>
+                            <Label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">User Role</Label>
                             <Select value={accountType} onValueChange={setAccountType} disabled={!isAdmin}>
                                 <SelectTrigger className="bg-muted/30 border-border/40 rounded-xl h-11 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl border-border/40 shadow-2xl font-bold">
-                                    <SelectItem value="admin">Administrator (Full Access)</SelectItem>
-                                    <SelectItem value="student">Student (Restricted)</SelectItem>
+                                    <SelectItem value="admin">Admin</SelectItem>
+                                    <SelectItem value="student">Student</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -481,8 +481,8 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
                         <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
                             <p className="text-[10px] font-medium leading-relaxed text-muted-foreground italic">
                                 {accountType === "admin" 
-                                    ? "Admins can manage tasks, users, and audit logs across the entire infrastructure."
-                                    : "Students are restricted to logging their own service hours and viewing personal tasks."}
+                                    ? "Admins can manage all tasks, users, and logs."
+                                    : "Students can only log their own hours and view their tasks."}
                             </p>
                         </div>
                     </div>
@@ -497,14 +497,14 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
                                     className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-black uppercase text-xs tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                                 >
                                     {isSaving && <IconLoader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                    Apply System Update
+                                    Save Changes
                                 </Button>
                                 <Button 
                                     variant="ghost" 
                                     onClick={() => setShowDeleteAlert(true)}
                                     className="w-full h-11 rounded-xl text-destructive hover:bg-destructive/10 font-bold uppercase text-[10px] tracking-widest"
                                 >
-                                    Purge Profile Registry
+                                    Delete User Account
                                 </Button>
                             </>
                         )}
@@ -520,19 +520,19 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
                 <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
                     <AlertDialogContent className="rounded-2xl border-border/40 bg-background/95 backdrop-blur-2xl">
                         <AlertDialogHeader>
-                            <AlertDialogTitle className="font-black uppercase tracking-tight">Irreversible Action</AlertDialogTitle>
+                            <AlertDialogTitle className="font-black uppercase tracking-tight">Delete User</AlertDialogTitle>
                             <AlertDialogDescription className="text-sm font-medium">
-                                This will permanently remove <span className="text-foreground font-bold">{user.firstname} {user.lastname}</span> from the OSA system. All associated session data will be archived.
+                                Are you sure you want to delete <span className="text-foreground font-bold">{user.firstname} {user.lastname}</span>? This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="gap-3">
-                            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Abort</AlertDialogCancel>
+                            <AlertDialogCancel className="rounded-xl font-bold border-border/40">Cancel</AlertDialogCancel>
                             <AlertDialogAction 
                                 onClick={handleDelete}
                                 className="bg-destructive text-destructive-foreground rounded-xl font-bold hover:bg-destructive/90"
                             >
                                 {isDeleting && <IconLoader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                Confirm Purge
+                                Delete
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

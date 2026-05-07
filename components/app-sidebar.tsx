@@ -52,34 +52,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [profile]);
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="space-y-4 pt-6 pb-2">
-        <div className="flex items-center gap-3 px-3 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
-          <a href="/" className="flex items-center gap-3 w-full overflow-hidden group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center">
-            <div className="relative group flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-transparent dark:bg-gradient-to-br dark:from-[#2a2b32] dark:to-[#1c1d22] border border-black/5 dark:border-white/5 shadow-sm dark:shadow-[0_4px_12px_rgba(0,0,0,0.4)] transition-all duration-300 hover:border-primary/30 hover:shadow-primary/5 group-data-[collapsible=icon]:mx-auto overflow-hidden">
-              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-border/40 bg-[#09090b]"
+      {...props}
+    >
+      <SidebarHeader className="space-y-6 pt-8 pb-4 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
+        <div className="flex items-center gap-3 px-4 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:justify-center">
+          <a href="/" className="flex items-center gap-3 w-full overflow-hidden group-data-[collapsible=icon]:w-auto group-data-[collapsible=icon]:justify-center transition-all duration-300 group/link">
+            <div className="relative group flex h-12 w-12 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 shrink-0 items-center justify-center rounded-2xl group-data-[collapsible=icon]:rounded-lg bg-gradient-to-br from-card to-muted border border-border/40 shadow-2xl transition-all duration-500 -rotate-3 group-hover/link:rotate-3 hover:scale-105 overflow-hidden">
+              <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover/link:opacity-100 transition-opacity" />
               <Image
                 src={LogoLight}
                 alt="Osa Logo"
-                width={32}
-                height={32}
-                className="block dark:hidden object-contain relative z-10 transition-all duration-500 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg] rounded-md"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+                width={36}
+                height={36}
+                className="block dark:hidden object-contain relative z-10 transition-all duration-500 group-hover/link:scale-110 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 -rotate-3 group-hover/link:rotate-6"
               />
               <Image
                 src={LogoDark}
                 alt="Osa Logo"
-                width={32}
-                height={32}
-                className="hidden dark:block object-contain relative z-10 transition-all duration-500 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg] rounded-md"
-                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+                width={36}
+                height={36}
+                className="hidden dark:block object-contain relative z-10 transition-all duration-500 group-hover/link:scale-110 group-data-[collapsible=icon]:w-5 group-data-[collapsible=icon]:h-5 -rotate-3 group-hover/link:rotate-6"
               />
             </div>
-            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="font-bold text-base tracking-tight truncate text-foreground/90">
-                OSA Service Portal
+            <div className="flex flex-col group-data-[collapsible=icon]:hidden opacity-100 transition-all duration-300">
+              <span className="font-black text-lg leading-none tracking-tight text-foreground/90 uppercase">
+                OSA Portal
               </span>
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest truncate">
+              <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mt-1 whitespace-nowrap opacity-80">
                 Management System
               </span>
             </div>
@@ -87,13 +89,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="px-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
         <NavMain items={staticData.navMain} />
         <NavDocuments items={filteredDocuments} />
-        <NavSecondary items={staticData.navSecondary} className="mt-auto" />
+        <div className="mt-auto px-2 pb-4">
+          <NavSecondary items={staticData.navSecondary} />
+        </div>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center bg-muted/20 border-t border-border/20">
         <NavUser
           user={{
             id: profile?.id ?? "",

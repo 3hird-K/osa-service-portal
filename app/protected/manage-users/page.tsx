@@ -50,19 +50,19 @@ export default function ManageUsersPage() {
                 <div className="space-y-1">
                     <div className="flex items-center gap-3 mb-1">
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
-                            User Registry
+                            User List
                         </p>
                         <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
-                            Live Sync Active
+                            Live
                         </Badge>
                     </div>
                     <h2 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent uppercase">
-                        Manage Users
+                        Users
                     </h2>
                     <p className="text-sm text-muted-foreground font-medium max-w-2xl">
                         {isAdmin
-                            ? "Administrative control panel for user lifecycle management. You can upgrade roles, audit profiles, and maintain personnel integrity."
-                            : "Registry of all active OSA service participants. Role modifications require administrative credentials."}
+                            ? "View and manage user accounts, roles, and permissions."
+                            : "List of all active participants."}
                     </p>
                 </div>
 
@@ -77,7 +77,7 @@ export default function ManageUsersPage() {
             {error && (
                 <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive text-sm font-bold flex items-center gap-3">
                     <IconShieldCheck className="h-5 w-5" />
-                    <span>System Error: {error instanceof Error ? error.message : "Failed to establish secure registry connection"}</span>
+                    <span>Error: {error instanceof Error ? error.message : "Failed to load users"}</span>
                 </div>
             )}
 
