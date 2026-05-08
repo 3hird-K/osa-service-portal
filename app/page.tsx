@@ -74,7 +74,7 @@ export default async function Home() {
                         {user?.emailAddresses[0].emailAddress}
                       </span>
                     </div>
-                    <UserButton afterSignOutUrl="/" />
+                    <UserButton />
                   </div>
                 )}
                 <div className="h-6 w-px bg-border/20 mx-1 hidden xs:block" />
