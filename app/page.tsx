@@ -20,10 +20,10 @@ export default async function Home() {
   const user = await currentUser();
   return (
     <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
+      <div className="flex-1 w-full flex flex-col gap-10 items-center">
         {/* Navbar */}
         <nav className="sticky top-0 z-50 w-full flex justify-center border-b border-b-foreground/10 bg-background/80 backdrop-blur">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm">
+          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-3 sm:px-5 text-sm">
             <div className="flex items-center gap-5 font-semibold">
               <Link href="/protected" className="flex items-center gap-3 group">
                 <div className="relative flex items-center justify-center py-2 transition-all duration-300">
@@ -43,10 +43,10 @@ export default async function Home() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg tracking-tight text-foreground/90">
-                    OSA Service Portal
+                  <span className="font-bold text-base sm:text-lg tracking-tight text-foreground/90 whitespace-nowrap">
+                    OSA <span className="hidden sm:inline">Service</span> Portal
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none">
+                  <span className="hidden sm:block text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none">
                     Management System
                   </span>
                 </div>
@@ -57,12 +57,12 @@ export default async function Home() {
             <Suspense fallback={<div className="h-8 w-20 bg-muted animate-pulse rounded-md" />}>
               <div className="flex items-center gap-4">
                 {!userId ? (
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5 sm:gap-2">
                     <Link href="/auth/login">
-                      <Button variant="outline" size="sm">Sign In</Button>
+                      <Button variant="outline" size="sm" className="h-8 px-2 sm:px-4 text-xs sm:text-sm">Sign In</Button>
                     </Link>
                     <Link href="/auth/sign-up">
-                      <Button size="sm">Sign Up</Button>
+                      <Button size="sm" className="h-8 px-2 sm:px-4 text-xs sm:text-sm">Sign Up</Button>
                     </Link>
                   </div>
                 ) : (
@@ -86,7 +86,7 @@ export default async function Home() {
         </nav>
 
         {/* Page Content */}
-        <div className="flex-1 w-full flex flex-col gap-10 sm:gap-20 max-w-5xl p-5 overflow-hidden">
+        <div className="flex-1 w-full flex flex-col gap-10 sm:gap-20 max-w-5xl p-5">
           <div data-aos="fade-up">
             <Hero />
           </div>

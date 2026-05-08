@@ -98,8 +98,8 @@ function TrackContent() {
   });
 
   return (
-    <div className="flex flex-col h-screen bg-muted/30 overflow-hidden">
-      <div className="flex-1 flex flex-col items-center justify-center p-4 max-w-lg mx-auto w-full gap-4">
+    <div className="flex flex-col min-h-[100dvh] bg-muted/30 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 py-10 max-w-lg mx-auto w-full gap-4">
 
         {/* Compact Back Link */}
         <Link href="/" className="inline-flex items-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors mb-2">
