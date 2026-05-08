@@ -19,7 +19,7 @@ export function Hero() {
   };
 
   return (
-    <section className="flex flex-col items-center justify-center text-center gap-8 px-6 pt-[-1rem] mt-1 pb-5 sm:gap-10 sm:py-24">
+    <section className="flex flex-col items-center justify-center text-center gap-8 px-6 pt-12 sm:pt-20 pb-12 sm:gap-10 sm:py-32">
 
       <a
         href="https://www.ustp.edu.ph/"

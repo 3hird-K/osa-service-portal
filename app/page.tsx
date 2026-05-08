@@ -22,63 +22,62 @@ export default async function Home() {
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-10 items-center">
         {/* Navbar */}
-        <nav className="sticky top-0 z-50 w-full flex justify-center border-b border-b-foreground/10 bg-background/80 backdrop-blur">
-          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-3 sm:px-5 text-sm">
-            <div className="flex items-center gap-5 font-semibold">
-              <Link href="/protected" className="flex items-center gap-3 group">
-                <div className="relative flex items-center justify-center py-2 transition-all duration-300">
+        <nav className="sticky top-0 z-50 w-full flex justify-center border-b border-border/40 bg-background/80 backdrop-blur-xl">
+          <div className="w-full max-w-5xl flex justify-between items-center p-3 px-4 sm:px-6 h-16">
+            <div className="flex items-center gap-3 font-semibold shrink-0">
+              <Link href="/" className="flex items-center gap-2.5 group">
+                <div className="relative flex items-center justify-center shrink-0">
                   <Image
                     src={LogoLight}
-                    alt="Logo Light"
-                    width={40}
-                    height={40}
-                    className="block dark:hidden rounded-md object-contain shadow-sm border border-border/10 transition-all duration-400 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg]"
+                    alt="Logo"
+                    width={36}
+                    height={36}
+                    className="block dark:hidden rounded-lg object-contain transition-transform duration-500 group-hover:scale-110"
                   />
                   <Image
                     src={LogoDark}
-                    alt="Logo Dark"
-                    width={40}
-                    height={40}
-                    className="hidden dark:block rounded-md object-contain shadow-sm border border-border/10 transition-all duration-500 -rotate-[6deg] group-hover:scale-110 group-hover:rotate-[6deg]"
+                    alt="Logo"
+                    width={36}
+                    height={36}
+                    className="hidden dark:block rounded-lg object-contain transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-base sm:text-lg tracking-tight text-foreground/90 whitespace-nowrap">
-                    OSA <span className="hidden sm:inline">Service</span> Portal
+                  <span className="font-extrabold text-sm sm:text-base tracking-tight text-foreground whitespace-nowrap leading-tight">
+                    OSA <span className="hidden xs:inline">Service</span> Portal
                   </span>
-                  <span className="hidden sm:block text-[10px] text-muted-foreground font-semibold uppercase tracking-widest leading-none">
+                  <span className="text-[8px] sm:text-[9px] text-muted-foreground font-bold uppercase tracking-[0.15em] leading-none">
                     Management System
                   </span>
                 </div>
               </Link>
             </div>
 
-            {/* 2. Wrap the Auth logic in Suspense */}
-            <Suspense fallback={<div className="h-8 w-20 bg-muted animate-pulse rounded-md" />}>
-              <div className="flex items-center gap-4">
+            <Suspense fallback={<div className="h-9 w-24 bg-muted/40 animate-pulse rounded-full" />}>
+              <div className="flex items-center gap-2 sm:gap-4 ml-auto">
                 {!userId ? (
-                  <div className="flex gap-1.5 sm:gap-2">
-                    <Link href="/auth/login">
-                      <Button variant="outline" size="sm" className="h-8 px-2 sm:px-4 text-xs sm:text-sm">Sign In</Button>
-                    </Link>
-                    <Link href="/auth/sign-up">
-                      <Button size="sm" className="h-8 px-2 sm:px-4 text-xs sm:text-sm">Sign Up</Button>
-                    </Link>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Button variant="ghost" size="sm" asChild className="h-9 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-semibold transition-all">
+                      <Link href="/auth/login">Sign In</Link>
+                    </Button>
+                    <Button size="sm" asChild className="h-9 px-3 sm:px-4 rounded-full text-xs sm:text-sm font-bold shadow-md shadow-primary/10 transition-all active:scale-95">
+                      <Link href="/auth/sign-up">Sign Up</Link>
+                    </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 px-1.5 py-1 rounded-full bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
-                    <div className="hidden sm:flex flex-col items-end px-2">
-                      <span className="text-[11px] font-extrabold text-foreground leading-tight tracking-tight">
-                        {user?.firstName} {user?.lastName}
+                  <div className="flex items-center gap-2 pl-3 pr-1.5 py-1 rounded-full bg-muted/40 border border-border/40 hover:bg-muted/60 transition-all group">
+                    <div className="hidden sm:flex flex-col items-end px-1">
+                      <span className="text-[11px] font-bold text-foreground leading-tight">
+                        {user?.firstName}
                       </span>
-                      <span className="text-[9px] text-muted-foreground font-medium leading-tight">
+                      <span className="text-[9px] text-muted-foreground font-medium leading-tight opacity-70 truncate max-w-[80px]">
                         {user?.emailAddresses[0].emailAddress}
                       </span>
                     </div>
-                    <div className="h-6 w-[1px] bg-border/40 mx-1" />
-                    <UserButton />
+                    <UserButton afterSignOutUrl="/" />
                   </div>
                 )}
+                <div className="h-6 w-px bg-border/20 mx-1 hidden xs:block" />
                 <ThemeSwitcher />
               </div>
             </Suspense>

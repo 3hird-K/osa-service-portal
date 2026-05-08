@@ -5,29 +5,23 @@ import { ThemeSwitcher } from "./theme-switcher"
 
 export function SiteHeader() {
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border bg-background transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4 bg-border"
-        />
-        <h1 className="text-base font-medium">Osa Service Portal</h1>
-        <div className="ml-auto">
+    <header className="sticky top-0 z-40 flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border/40 bg-background/80 backdrop-blur-xl transition-all ease-in-out group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
+      <div className="flex w-full items-center gap-3 px-4 sm:px-6">
+        <div className="flex items-center gap-1.5">
+          <SidebarTrigger className="-ml-1 hover:bg-muted/50 rounded-lg transition-colors size-8" />
+          <div className="h-4 w-px bg-border/40 mx-2 hidden sm:block" />
+        </div>
+
+        <div className="flex flex-col">
+          <h1 className="text-sm font-bold tracking-tight text-foreground/50 uppercase">
+            USTP DASHBOARD
+          </h1>
+        </div>
+
+        <div className="ml-auto flex items-center gap-2 sm:gap-4">
+          <div className="h-8 w-px bg-border/20 mx-1 hidden sm:block" />
           <ThemeSwitcher />
         </div>
-        {/* <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
-            <a
-              href="https://github.com/shadcn-ui/ui/tree/main/apps/v4/app/(examples)/dashboard"
-              rel="noopener noreferrer"
-              target="_blank"
-              className="dark:text-foreground"
-            >
-              GitHub
-            </a>
-          </Button>
-        </div> */}
       </div>
     </header>
   )
