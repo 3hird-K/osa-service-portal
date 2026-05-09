@@ -25,7 +25,7 @@ export default async function Home() {
         <nav className="sticky top-0 z-50 w-full flex justify-center border-b border-border/40 bg-background/80 backdrop-blur-xl">
           <div className="w-full max-w-5xl flex justify-between items-center p-3 px-4 sm:px-6 h-16">
             <div className="flex items-center gap-3 font-semibold shrink-0">
-              <Link href="/" className="flex items-center gap-2.5 group">
+              <Link href="/protected" className="flex items-center gap-2.5 group">
                 <div className="relative flex items-center justify-center shrink-0">
                   <Image
                     src={LogoLight}
