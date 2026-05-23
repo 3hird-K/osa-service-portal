@@ -55,7 +55,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center min-h-screen bg-[#09090b] relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center min-h-screen bg-background relative overflow-hidden">
         {/* Animated Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] animate-pulse" />
 
@@ -67,15 +67,15 @@ export default function DashboardPage() {
             <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-[spin_1.5s_linear_infinite]" />
           </div>
 
-          <h2 className="text-xl font-bold text-zinc-100 mb-2">Waking up Service Engine</h2>
-          <p className="text-sm text-zinc-500 leading-relaxed">
+          <h2 className="text-xl font-bold text-foreground mb-2">Waking up Service Engine</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
             The OSA server is resuming from a sleep state. This usually takes <span className="text-primary font-bold">15-30 seconds</span> on the free tier.
           </p>
 
-          <div className="mt-8 w-full h-1 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="mt-8 w-full h-1 bg-muted rounded-full overflow-hidden">
             <div className="h-full bg-primary animate-[loading_20s_ease-in-out_infinite]" />
           </div>
-          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">
+          <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">
             Initialising USTP Infrastructure...
           </p>
         </div>

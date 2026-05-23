@@ -54,7 +54,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-border/40 bg-[#09090b]"
+      className="border-r-0 bg-sidebar"
       {...props}
     >
       <SidebarHeader className="space-y-6 pt-8 pb-4 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:items-center">
