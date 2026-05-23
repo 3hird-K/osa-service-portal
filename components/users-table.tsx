@@ -371,8 +371,7 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
     const handleSave = async () => {
         setIsSaving(true)
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
-            const res = await fetch(`${baseUrl}/api/admin/update-user`, {
+            const res = await fetch(`/api/admin/update-user`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -396,8 +395,7 @@ function UserSheet({ user, isAdmin, onClose, onSaved }: UserSheetProps) {
     const handleDelete = async () => {
         setIsDeleting(true)
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
-            const res = await fetch(`${baseUrl}/api/admin/delete-user`, {
+            const res = await fetch(`/api/admin/delete-user`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ targetUserId: user.id }),
