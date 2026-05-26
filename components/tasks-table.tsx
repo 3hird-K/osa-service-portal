@@ -154,7 +154,6 @@ export function TasksTable() {
     total: tasks.length,
     inProgress: tasks.filter(t => t.status === "In Progress").length,
     completed: tasks.filter(t => t.status === "Completed").length,
-    maintenance: tasks.filter(t => t.status === "Maintenance").length
   }), [tasks])
 
   const columns: ColumnDef<Task>[] = [
@@ -205,7 +204,6 @@ export function TasksTable() {
         const status = row.getValue("status") as string
         const isCompleted = status === "Completed"
         const isInProgress = status === "In Progress"
-        const isMaintenance = status === "Maintenance"
         
         return (
           <Badge 
@@ -213,14 +211,13 @@ export function TasksTable() {
             className={`gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
               isCompleted ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-sm shadow-emerald-500/5" :
               isInProgress ? "bg-blue-500/10 text-blue-500 border-blue-500/20 shadow-sm shadow-blue-500/5" :
-              isMaintenance ? "bg-destructive/10 text-destructive border-destructive/20" :
               "bg-muted/50 text-muted-foreground border-border/50"
             }`}
           >
             <div className={`h-1.5 w-1.5 rounded-full ${
               isCompleted ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" :
               isInProgress ? "bg-blue-500 animate-pulse" :
-              isMaintenance ? "bg-destructive" : "bg-muted-foreground"
+              "bg-muted-foreground"
             }`} />
             {status}
           </Badge>
@@ -356,12 +353,11 @@ export function TasksTable() {
   return (
     <div className="w-full space-y-8">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
               { label: "Total Tasks", value: stats.total, icon: IconClipboardList, color: "text-primary" },
               { label: "In Progress", value: stats.inProgress, icon: IconActivity, color: "text-blue-500" },
               { label: "Completed", value: stats.completed, icon: IconCheck, color: "text-emerald-500" },
-              { label: "Maintenance", value: stats.maintenance, icon: IconAlertCircle, color: "text-destructive" },
           ].map((stat, i) => (
               <div key={i} className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card/50 backdrop-blur-sm p-4 transition-all hover:shadow-xl hover:shadow-primary/5">
                   <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform ${stat.color}`}>
