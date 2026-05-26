@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { IconBrandApple, IconUser } from "@tabler/icons-react";
 import { useProfile } from "@/hooks/use-profile";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useClerk } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -16,11 +17,11 @@ export default function Settings() {
   const [bookAlerts, setBookAlerts] = useState(true);
   const [deviceAlerts, setDeviceAlerts] = useState(true);
   const [weeklyDigest, setWeeklyDigest] = useState(false);
-  const [loginAlerts, setLoginAlerts] = useState(true);
 
   // Profile state
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { user } = useUser();
+  const { signOut } = useClerk();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -36,13 +37,21 @@ export default function Settings() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Delete account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
   useEffect(() => {
     if (profile) {
       setFirstName(profile.firstname ?? "");
       setLastName(profile.lastname ?? "");
       setAvatarUrl(profile.avatar_url ?? "");
     }
-  }, [profile]);
+    if (user) {
+      setIs2FAEnabled(user.twoFactorEnabled);
+    }
+  }, [profile, user]);
 
   const maskEmail = (email: string | undefined) => {
     if (!email) return "***";
@@ -53,7 +62,7 @@ export default function Settings() {
 
   const handleChangePassword = async () => {
     if (!user) return;
-    
+
     // Validation
     if (!currentPassword.trim()) {
       setResetMessage("Please enter your current password");
@@ -71,40 +80,64 @@ export default function Settings() {
       setResetMessage("New passwords do not match");
       return;
     }
-    
+
     setIsResettingPassword(true);
     setResetMessage("");
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com"}/users/${user.id}/change-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            current_password: currentPassword,
-            new_password: newPassword,
-          }),
-        }
-      );
+      // Use Clerk's built-in updatePassword — no backend needed
+      await user.updatePassword({
+        currentPassword,
+        newPassword,
+      });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setResetMessage(data.detail || "Failed to change password");
-        return;
-      }
-      
       setResetMessage("Password changed successfully!");
+      toast.success("Password updated successfully");
       setTimeout(() => {
         setShowPasswordModal(false);
         setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
-      }, 2000);
-    } catch (error) {
-      setResetMessage("Error: " + (error instanceof Error ? error.message : "Unknown error"));
+        setResetMessage("");
+      }, 1500);
+    } catch (error: any) {
+      const clerkError = error?.errors?.[0];
+      let message = clerkError?.longMessage || clerkError?.message || error?.message || "Failed to change password";
+      
+      // Specifically handle Clerk's security verification requirement
+      const lowMessage = message.toLowerCase();
+      if (
+        lowMessage.includes("reverify") || 
+        lowMessage.includes("session") || 
+        lowMessage.includes("additional verification")
+      ) {
+        message = "For your security, you must log out and log back in before you can change your password.";
+      }
+      
+      setResetMessage(message);
     } finally {
       setIsResettingPassword(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (deleteConfirmText !== profile?.email) {
+      toast.error("Email does not match. Please try again.");
+      return;
+    }
+
+    setIsDeletingAccount(true);
+    try {
+      const res = await fetch("/api/user/delete", { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to delete account");
+      }
+      toast.success("Account deleted successfully");
+      await signOut({ redirectUrl: "/" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete account");
+      setIsDeletingAccount(false);
     }
   };
 
@@ -261,31 +294,15 @@ export default function Settings() {
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between rounded-xl bg-background/50 border border-border p-4">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">Google Authenticator (2FA)</span>
-                        <span className="text-xs text-muted-foreground">Use the Authenticator to get verification codes for better security.</span>
-                      </div>
-                      <CustomSwitch enabled={is2FAEnabled} onChange={() => setIs2FAEnabled(!is2FAEnabled)} />
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-xl bg-background/50 border border-border p-4">
-                      <div className="flex flex-col gap-1">
                         <span className="text-sm font-medium">Password</span>
                         <span className="text-xs text-muted-foreground">Set a unique password for better protection</span>
                       </div>
                       <button
-                        onClick={handleChangePassword}
+                        onClick={() => setShowPasswordModal(true)}
                         className="rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-foreground px-4 py-2 text-xs font-medium transition-colors border border-border"
                       >
                         Change password
                       </button>
-                    </div>
-
-                    <div className="flex items-center justify-between rounded-xl bg-background/50 border border-border p-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">Login Alerts</span>
-                        <span className="text-xs text-muted-foreground">Get notified when your account is logged in from a new device.</span>
-                      </div>
-                      <CustomSwitch enabled={loginAlerts} onChange={() => setLoginAlerts(!loginAlerts)} />
                     </div>
                   </div>
                 </section>
@@ -293,29 +310,40 @@ export default function Settings() {
                 {/* Devices and Activities Section */}
                 <section>
                   <h3 className="text-sm font-semibold mb-4 text-foreground">Devices and Activities</h3>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">Device Management</span>
-                        <span className="text-xs text-muted-foreground">Authorize devices with access to your account</span>
-                      </div>
-                      <button className="rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-foreground px-4 py-2 text-xs font-medium transition-colors border border-border">
-                        Manage
-                      </button>
+                  <div className="flex items-center justify-between gap-6 rounded-xl bg-background/50 border border-border p-5">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-sm font-medium">Device Management</span>
+                      <span className="text-xs text-muted-foreground leading-relaxed max-w-[280px]">
+                        Review and manage the devices currently authorized to access your account.
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3 rounded-xl bg-background/50 border border-border p-4 mt-2 max-w-sm">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent border border-border">
-                        <IconBrandApple className="h-5 w-5 opacity-70" />
+
+                    <div className="flex items-center gap-4 rounded-xl bg-sidebar-accent/30 border border-border/50 p-4 min-w-[280px]">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-background border border-border shadow-sm">
+                        <IconBrandApple className="h-6 w-6 opacity-80 text-foreground" />
                       </div>
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-xs font-medium">Current Browser Session</span>
-                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                          <div className="flex items-center gap-1 text-primary">
-                            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            <span>Current session</span>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">Active Session</span>
+                        <span className="text-sm font-bold text-foreground">
+                          {typeof window !== "undefined" ? (
+                            <>
+                              {navigator.userAgent.includes("Windows") ? "Windows PC" : 
+                               navigator.userAgent.includes("Mac") ? "MacBook Pro" : 
+                               navigator.userAgent.includes("iPhone") ? "iPhone" : "Personal Device"} 
+                              {" • "}
+                              {navigator.userAgent.includes("Chrome") ? "Google Chrome" : 
+                               navigator.userAgent.includes("Firefox") ? "Firefox" : 
+                               navigator.userAgent.includes("Safari") ? "Safari" : "Browser"}
+                            </>
+                          ) : "Current Device"}
+                        </span>
+                        <div className="flex items-center gap-2 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-green-500 font-medium">
+                            <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                            <span>Connected</span>
                           </div>
-                          <span>•</span>
-                          <span>Active now</span>
+                          <span className="text-muted-foreground/50">•</span>
+                          <span className="text-muted-foreground font-medium">Active now</span>
                         </div>
                       </div>
                     </div>
@@ -331,7 +359,10 @@ export default function Settings() {
                         <span className="text-sm font-medium">Delete Account</span>
                         <span className="text-xs text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</span>
                       </div>
-                      <button className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 text-xs font-medium transition-colors">
+                      <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 text-xs font-medium transition-colors"
+                      >
                         Delete Account
                       </button>
                     </div>
@@ -395,14 +426,6 @@ export default function Settings() {
                       </div>
                       <CustomSwitch enabled={deviceAlerts} onChange={() => setDeviceAlerts(!deviceAlerts)} />
                     </div>
-
-                    <div className="flex items-center justify-between rounded-xl bg-background/50 border border-border p-4">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">Security Alerts</span>
-                        <span className="text-xs text-muted-foreground">Get notified about suspicious login attempts and security events</span>
-                      </div>
-                      <CustomSwitch enabled={loginAlerts} onChange={() => setLoginAlerts(!loginAlerts)} />
-                    </div>
                   </div>
                 </section>
 
@@ -458,10 +481,10 @@ export default function Settings() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
-                    {showCurrentPassword ? "Hide" : "Show"}
+                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -480,10 +503,10 @@ export default function Settings() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
-                    {showNewPassword ? "Hide" : "Show"}
+                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -502,10 +525,10 @@ export default function Settings() {
                   />
                   <button
                     type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? "Hide" : "Show"}
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
               </div>
@@ -543,6 +566,58 @@ export default function Settings() {
                 className="flex-1 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {isResettingPassword ? "Updating..." : "Change Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-sidebar border border-destructive/40 p-6 shadow-2xl">
+            {/* Header */}
+            <div className="flex flex-col gap-1 mb-5">
+              <h2 className="text-xl font-semibold text-destructive">Delete Account</h2>
+              <p className="text-xs text-muted-foreground">
+                This action is <span className="font-semibold text-foreground">permanent and irreversible</span>. All your data will be deleted immediately.
+              </p>
+            </div>
+
+            {/* Email Confirmation */}
+            <div className="flex flex-col gap-2 mb-5">
+              <label className="text-xs font-medium text-muted-foreground">
+                Type your email address to confirm:
+                <span className="ml-1 font-semibold text-foreground">{profile?.email}</span>
+              </label>
+              <input
+                type="email"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Enter your email"
+                disabled={isDeletingAccount}
+                className="w-full rounded-lg bg-background/50 border border-border px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-destructive"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                }}
+                disabled={isDeletingAccount}
+                className="flex-1 rounded-full bg-sidebar-accent hover:bg-sidebar-accent/80 text-foreground px-4 py-2 text-sm font-medium transition-colors border border-border disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount || deleteConfirmText !== profile?.email}
+                className="flex-1 rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground px-4 py-2 text-sm font-medium transition-colors disabled:opacity-40"
+              >
+                {isDeletingAccount ? "Deleting..." : "Delete My Account"}
               </button>
             </div>
           </div>

@@ -13,7 +13,7 @@ import Image from "next/image";
 import { Eye, EyeOff, Loader2, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 import Logo from "@/assets/ustp.png";
-import RightImage from "@/assets/left-image.png";
+import RightImage from "@/assets/osa.jpg";
 
 export function SignUpForm({
   className,
@@ -30,11 +30,9 @@ export function SignUpForm({
     userName: "",
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -80,12 +78,6 @@ export function SignUpForm({
 
     if (!formData.password) {
       setError("Password is required");
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
       setIsLoading(false);
       return;
     }
@@ -197,33 +189,30 @@ export function SignUpForm({
             </div>
 
             {/* Progress Indicator */}
-            {step !== "verification" && (
+            {/* {step !== "verification" && (
               <div className="flex items-center justify-between mb-8 px-2">
                 <div className="flex flex-col items-center flex-1">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    step === "personal" || step === "credentials"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step === "personal" || step === "credentials"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
+                    }`}>
                     1
                   </div>
                   <span className="text-xs text-muted-foreground mt-1">Personal</span>
                 </div>
-                
-                <div className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${
-                  step === "credentials" ? "bg-primary" : "bg-muted"
-                }`} />
-                
+
+                <div className={`flex-1 h-0.5 mx-2 rounded-full transition-all ${step === "credentials" ? "bg-primary" : "bg-muted"
+                  }`} />
+
                 <div className="flex flex-col items-center flex-1">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    step === "credentials" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step === "credentials" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}>
                     2
                   </div>
                   <span className="text-xs text-muted-foreground mt-1">Credentials</span>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* STEP 1: PERSONAL INFO */}
             {step === "personal" && (
@@ -274,9 +263,9 @@ export function SignUpForm({
                   <p className="text-sm text-red-500 text-center">{error}</p>
                 )}
 
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full"
                   disabled={isLoading}
                 >
                   Next <ArrowRight className="ml-2 h-4 w-4" />
@@ -313,7 +302,7 @@ export function SignUpForm({
                       value={formData.password}
                       onChange={handleInputChange}
                       disabled={isLoading}
-                      className="pr-10"
+                      className="pr-12"
                     />
                     <button
                       type="button"
@@ -322,31 +311,6 @@ export function SignUpForm({
                       aria-label="Toggle password visibility"
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      required
-                      value={formData.confirmPassword}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                      onClick={() => setShowConfirmPassword((v) => !v)}
-                      aria-label="Toggle confirm password visibility"
-                    >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
                 </div>
@@ -367,9 +331,9 @@ export function SignUpForm({
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                   </Button>
-                  <Button 
-                    type="submit" 
-                    className="flex-1" 
+                  <Button
+                    type="submit"
+                    className="flex-1"
                     disabled={isLoading}
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

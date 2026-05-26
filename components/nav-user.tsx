@@ -35,6 +35,13 @@ export function NavUser({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const logout = async () => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
+    try {
+      // Notify backend that user is logging out
+      await fetch(`${baseUrl}/users/${user.id}/logout`, { method: "POST" });
+    } catch (error) {
+      console.error("Failed to notify backend of logout", error);
+    }
     await signOut({ redirectUrl: "/auth/login" });
   };
 
@@ -45,60 +52,64 @@ export function NavUser({
   return (
     <>
       <SidebarMenu>
-        <SidebarMenuItem>
+        <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className="h-14 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8 rounded-2xl group-data-[collapsible=icon]:rounded-lg bg-card/40 border border-border/20 backdrop-blur-sm shadow-xl transition-all duration-300 hover:bg-muted/50 data-[state=open]:bg-primary/10 data-[state=open]:text-primary data-[state=open]:border-primary/20 px-3 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:mx-0"
               >
-                <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage 
-                    key={user.avatar} 
-                    src={user.avatar} 
-                    alt={fullName} 
-                  />
-                  <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
-                </Avatar>
+                <div className="relative shrink-0 group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full h-full">
+                    <Avatar className="h-9 w-9 group-data-[collapsible=icon]:h-6 group-data-[collapsible=icon]:w-6 rounded-xl group-data-[collapsible=icon]:rounded-lg border-2 border-border shadow-sm transition-transform group-hover:scale-105">
+                      <AvatarImage 
+                        key={user.avatar} 
+                        src={user.avatar} 
+                        alt={fullName} 
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-black text-[10px] group-data-[collapsible=icon]:text-[8px]">{initials}</AvatarFallback>
+                    </Avatar>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 group-data-[collapsible=icon]:h-2 group-data-[collapsible=icon]:w-2 rounded-full bg-emerald-500 ring-2 ring-background shadow-lg" />
+                </div>
                 
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{fullName}</span>
-                  <span className="text-muted-foreground truncate text-xs">
+                <div className="grid flex-1 text-left text-sm leading-tight ml-2 group-data-[collapsible=icon]:hidden">
+                  <span className="truncate font-black text-[11px] uppercase tracking-wider text-foreground/90">{fullName}</span>
+                  <span className="text-[9px] font-black text-primary uppercase tracking-[0.15em] opacity-70">
                     {user.account_type}
                   </span>
                 </div>
-                <IconDotsVertical className="ml-auto size-4" />
+                <IconDotsVertical className="ml-auto size-4 text-muted-foreground group-data-[collapsible=icon]:hidden" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+              className="w-(--radix-dropdown-menu-trigger-width) min-w-64 rounded-2xl bg-background/95 backdrop-blur-2xl border-border/40 shadow-2xl p-2"
               side={isMobile ? "bottom" : "right"}
               align="end"
-              sideOffset={4}
+              sideOffset={8}
             >
-              <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarImage src={user.avatar} alt={fullName} />
-                    <AvatarFallback className="rounded-lg">{initials}</AvatarFallback>
+              <DropdownMenuLabel className="p-3 font-normal">
+                <div className="flex items-center gap-3 text-left">
+                  <Avatar className="h-10 w-10 rounded-xl border border-border shadow-sm">
+                    <AvatarImage src={user.avatar} alt={fullName} className="object-cover" />
+                    <AvatarFallback className="rounded-xl bg-primary/10 text-primary font-black">{initials}</AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-medium">{fullName}</span>
-                    <span className="text-muted-foreground truncate text-xs">{user.email}</span>
+                  <div className="grid flex-1 text-left leading-tight">
+                    <span className="truncate font-black text-xs uppercase tracking-wider">{fullName}</span>
+                    <span className="text-[10px] text-muted-foreground font-medium truncate mt-0.5">{user.email}</span>
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>
-                  <IconUserCircle className="mr-2 size-4" />
-                  Account
+              <DropdownMenuSeparator className="bg-border/40 my-1" />
+              <DropdownMenuGroup className="p-1">
+                <DropdownMenuItem onSelect={() => setIsDialogOpen(true)} className="rounded-xl px-3 py-2 text-xs font-bold gap-3 focus:bg-primary/10 focus:text-primary transition-colors cursor-pointer">
+                  <IconUserCircle className="size-4" />
+                  Account Settings
                 </DropdownMenuItem>
               </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
-                <IconLogout className="mr-2 size-4" />
-                Logout
+              <DropdownMenuSeparator className="bg-border/40 my-1" />
+              <DropdownMenuItem onClick={logout} className="rounded-xl px-3 py-2 text-xs font-bold gap-3 text-destructive focus:bg-destructive/10 focus:text-destructive transition-colors cursor-pointer">
+                <IconLogout className="size-4" />
+                Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

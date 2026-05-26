@@ -4,7 +4,7 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { SyncUserProvider } from "@/provider/sync-user-provider";
+// import { SyncUserProvider } from "@/provider/sync-user-provider";
 
 export default function DashboardLayout({
   children,
@@ -12,26 +12,25 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SyncUserProvider>
-      <SidebarProvider
-        style={{
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties}
-      >
-        {/* The Sidebar stays here */}
-        <AppSidebar variant="inset" />
-        
-        <SidebarInset>
-          <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              {/* children represents the specific page (Dashboard or Library) */}
-              {children}
-            </div>
+    // <SyncUserProvider>
+    <SidebarProvider
+      style={{
+        "--sidebar-width": "calc(var(--spacing) * 72)",
+        "--header-height": "calc(var(--spacing) * 12)",
+      } as React.CSSProperties}
+    >
+      <AppSidebar variant="inset" />
+
+      <SidebarInset>
+        <SiteHeader />
+        <div className="flex flex-1 flex-col">
+          <div className="@container/main flex flex-1 flex-col gap-2">
+            {/* children represents the specific page (Dashboard or Library) */}
+            {children}
           </div>
-        </SidebarInset>
-      </SidebarProvider>
-    </SyncUserProvider>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+    // </SyncUserProvider>
   );
 }

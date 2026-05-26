@@ -1,119 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { IconUser, IconShieldCheck } from "@tabler/icons-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { DataTable2 } from "@/components/data-table2";
+import { UsersTable } from "@/components/users-table";
+import { useProfile } from "@/hooks/use-profile";
 
 export default function ManageUsersPage() {
-    const [studentsList, setStudentsList] = useState<any[]>([]);
-    const [adminList, setAdminList] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data: profile } = useProfile();
+    const isAdmin = profile?.account_type?.toLowerCase() === "admin";
 
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                setIsLoading(true);
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
-                
-                // Fetch students and admins in parallel
-                const [studentsResponse, adminsResponse] = await Promise.all([
-                    fetch(`${baseUrl}/students`),
-                    fetch(`${baseUrl}/admins`)
-                ]);
+    const { data: allUsers = [], isLoading, error, refetch: fetchUsers } = useQuery({
+        queryKey: ["manage-users-list"],
+        queryFn: async () => {
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://server-osa-service.onrender.com";
+            const [studentsRes, adminsRes] = await Promise.all([
+                fetch(`${baseUrl}/students`),
+                fetch(`${baseUrl}/admins`),
+            ]);
 
-                console.log("Hello")
-                console.log("hello", JSON.stringify(studentsResponse));
-                console.log("hello", JSON.stringify(adminsResponse));
-                
-                if (!studentsResponse.ok) {
-                    const studentError = await studentsResponse.text();
-                    throw new Error(`Failed to fetch students (${studentsResponse.status}): ${studentError}`);
-                }
-                if (!adminsResponse.ok) {
-                    const adminError = await adminsResponse.text();
-                    throw new Error(`Failed to fetch admins (${adminsResponse.status}): ${adminError}`);
-                }
-                
-                const [studentsData, adminsData] = await Promise.all([
-                    studentsResponse.json(),
-                    adminsResponse.json()
-                ]);
-                
-                setStudentsList(studentsData);
-                setAdminList(adminsData);
-                setError(null);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : "An error occurred";
-                setError(errorMessage);
-                console.error("Error fetching users:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+            const [students, admins] = await Promise.all([
+                studentsRes.ok ? studentsRes.json() : Promise.resolve([]),
+                adminsRes.ok ? adminsRes.json() : Promise.resolve([]),
+            ]);
 
-        fetchUsers();
-    }, []);
+            const merged = [...admins, ...students];
+            const seen = new Set();
+            return merged.filter((u: any) => {
+                if (!u.id || seen.has(u.id)) return false;
+                seen.add(u.id);
+                return true;
+            });
+        },
+        refetchInterval: 10000,
+    });
 
     return (
-        <div className="flex-1 space-y-6 p-8 pt-6 bg-background min-h-screen text-foreground">
-            {/* Header Section */}
-            <div className="flex items-center justify-between pb-4 border-b border-border/10">
-                <div>
-                    <h2 className="text-xl font-semibold tracking-tight text-white/90">
-                        Manage Users <span className="text-muted-foreground font-normal">— Dashboard</span>
+        <div className="flex-1 space-y-8 p-8 pt-6 bg-background min-h-screen text-foreground">
+            {/* Premium Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-3 mb-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">
+                            User List
+                        </p>
+                        <Badge variant="outline" className="rounded-full px-3 py-0.5 text-[9px] font-black uppercase tracking-widest bg-primary/5 text-primary border-primary/20">
+                            Live
+                        </Badge>
+                    </div>
+                    <h2 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground to-foreground/50 bg-clip-text text-transparent uppercase">
+                        Users
                     </h2>
+                    <p className="text-sm text-muted-foreground font-medium max-w-2xl">
+                        {isAdmin
+                            ? "View and manage user accounts, roles, and permissions."
+                            : "List of all active participants."}
+                    </p>
                 </div>
+
+                {isAdmin && (
+                    <Badge variant="outline" className="h-12 px-6 rounded-xl bg-primary/5 text-primary border-primary/20 font-black uppercase text-[10px] tracking-widest flex items-center gap-2 shadow-lg shadow-primary/5 hover:bg-primary/10 transition-colors">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        Admin Privileges Active
+                    </Badge>
+                )}
             </div>
 
-            {/* Error Display */}
             {error && (
-                <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-600 text-sm">
-                    Error: {error}
+                <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/10 text-destructive text-sm font-bold flex items-center gap-3">
+                    <IconShieldCheck className="h-5 w-5" />
+                    <span>Error: {error instanceof Error ? error.message : "Failed to load users"}</span>
                 </div>
             )}
 
-            {/* Loading State */}
-            {isLoading && (
-                <div className="p-4 rounded-lg bg-muted/50 border border-border text-muted-foreground text-sm">
-                    Loading users...
-                </div>
-            )}
-
-            {/* Tabs & Datatable Section */}
-            {!isLoading && (
-                <Tabs defaultValue="students" className="space-y-6 pt-2">
-                    <div className="flex items-center justify-between">
-                        <TabsList className="bg-card border border-border p-1 rounded-lg h-12">
-                            <TabsTrigger value="students" className="px-6 gap-2 h-9 data-[state=active]:bg-[#2c2d3c] data-[state=active]:text-white text-muted-foreground rounded-md transition-all">
-                                <IconUser size={16} />
-                                Students
-                                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px] bg-background text-muted-foreground border-none">
-                                    {studentsList.length}
-                                </Badge>
-                            </TabsTrigger>
-                            <TabsTrigger value="admin" className="px-6 gap-2 h-9 data-[state=active]:bg-[#2c2d3c] data-[state=active]:text-white text-muted-foreground rounded-md transition-all">
-                                <IconShieldCheck size={16} />
-                                Admin
-                                <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px] bg-background text-muted-foreground border-none">
-                                    {adminList.length}
-                                </Badge>
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-
-                    <div className="mt-2">
-                        <TabsContent value="students" className="m-0 border-none p-0 outline-none">
-                            <DataTable2 data={studentsList} />
-                        </TabsContent>
-                        <TabsContent value="admin" className="m-0 border-none p-0 outline-none">
-                            <DataTable2 data={adminList} />
-                        </TabsContent>
-                    </div>
-                </Tabs>
-            )}
+            {/* Table Area */}
+            <UsersTable 
+                data={allUsers} 
+                isLoading={isLoading} 
+                isAdmin={isAdmin} 
+                onRefresh={fetchUsers} 
+            />
         </div>
     );
 }

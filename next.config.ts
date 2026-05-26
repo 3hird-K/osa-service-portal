@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Your existing config
-  /* cacheComponents: true, */ 
   images: {
     remotePatterns: [
       {
