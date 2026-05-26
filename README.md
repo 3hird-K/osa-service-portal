@@ -10,15 +10,15 @@ The system replaces traditional paper-based workflows with a centralized platfor
 
 ## Features
 
-- Authentication and authorization using Clerk
-- Community service task assignment
-- Attendance and completion tracking
-- Announcements and notifications
-- Mobile responsive interface
-- Admin dashboard management
-- Real-time updates
-- Push notifications
-- Role-based access control
+- **Authentication & Authorization**: Secure login and registration powered by Clerk.
+- **User Management**: Admin dashboard to manage user accounts and role-based access control.
+- **Task Management**: Create, assign, and manage community service tasks.
+- **Time Logging & Attendance**: Comprehensive tracking of student hours and task completions.
+- **System Health Monitoring**: Real-time server status and heartbeat indicators.
+- **Mobile App Integration**: Seamless Android APK downloads via dynamic QR codes.
+- **Support & Feedback**: Integrated contact form and help system using Nodemailer.
+- **Modern UI/UX**: Fully mobile-responsive interface with Dark/Light mode theme support.
+- **Real-Time Updates & Notifications**: Push notifications and live updates for tasks and announcements.
 
 ---
 
